@@ -1,0 +1,24 @@
+{
+  "urls": [
+    "http://localhost:3000"
+  ],
+  "defaults": {
+    "timeout": 10000,
+    "wait": 1000,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "standard": "WCAG2AA",
+    "runners": [
+      "axe",
+      "htmlcs"
+    ],
+    "ignore": [
+      "WCAG2AA.Principle1.Guideline1_3.1_3_1.F68",
+      "WCAG2AA.Principle1.Guideline1_3.1_3_1.F77",
+      "WCAG2AA.Principle2.Guideline2_4.2_4_1.G1",
+      "WCAG2AA.Principle2.Guideline2_4.2_4_1.H64.1"
+    ]
+  }
+}

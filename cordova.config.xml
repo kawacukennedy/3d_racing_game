@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.velocityrush3d.game" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>VelocityRush3D</name>
+    <description>A full-featured 3D multiplayer racing game</description>
+    <author email="contact@velocityrush3d.com" href="https://velocityrush3d.com">VelocityRush3D Team</author>
+
+    <content src="index.html" />
+
+    <plugin name="cordova-plugin-whitelist" spec="1" />
+    <plugin name="cordova-plugin-device" spec="2.0.2" />
+    <plugin name="cordova-plugin-network-information" spec="2.0.1" />
+    <plugin name="cordova-plugin-vibration" spec="3.1.0" />
+    <plugin name="cordova-plugin-media" spec="5.0.2" />
+    <plugin name="cordova-plugin-geolocation" spec="4.0.1" />
+    <plugin name="cordova-plugin-camera" spec="4.1.0" />
+    <plugin name="cordova-plugin-file" spec="6.0.1" />
+    <plugin name="cordova-plugin-inappbrowser" spec="3.0.0" />
+    <plugin name="cordova-plugin-splashscreen" spec="5.0.2" />
+    <plugin name="cordova-plugin-statusbar" spec="2.4.2" />
+
+    <!-- iOS specific -->
+    <platform name="ios">
+        <allow-intent href="itms:*" />
+        <allow-intent href="itms-apps:*" />
+
+        <icon height="57" src="res/icons/ios/icon.png" width="57" />
+        <icon height="114" src="res/icons/ios/icon@2x.png" width="114" />
+        <icon height="40" src="src="res/icons/ios/icon-40.png" width="40" />
+        <icon height="80" src="res/icons/ios/icon-40@2x.png" width="80" />
+        <icon height="50" src="res/icons/ios/icon-50.png" width="50" />
+        <icon height="100" src="res/icons/ios/icon-50@2x.png" width="100" />
+        <icon height="60" src="res/icons/ios/icon-60.png" width="60" />
+        <icon height="120" src="res/icons/ios/icon-60@2x.png" width="120" />
+        <icon height="180" src="res/icons/ios/icon-60@3x.png" width="180" />
+        <icon height="72" src="res/icons/ios/icon-72.png" width="72" />
+        <icon height="144" src="res/icons/ios/icon-72@2x.png" width="144" />
+        <icon height="76" src="res/icons/ios/icon-76.png" width="76" />
+        <icon height="152" src="res/icons/ios/icon-76@2x.png" width="152" />
+        <icon height="167" src="res/icons/ios/icon-83.5@2x.png" width="167" />
+
+        <splash height="1136" src="res/screens/ios/Default-568h@2x~iphone.png" width="640" />
+        <splash height="1334" src="res/screens/ios/Default-667h.png" width="750" />
+        <splash height="2208" src="res/screens/ios/Default-736h.png" width="1242" />
+        <splash height="1242" src="res/screens/ios/Default-Landscape-736h.png" width="2208" />
+        <splash height="1536" src="res/screens/ios/Default-Landscape@2x~ipad.png" width="2048" />
+        <splash height="2048" src="res/screens/ios/Default-Landscape~ipad.png" width="1536" />
+        <splash height="768" src="res/screens/ios/Default-Landscape~ipad.png" width="1024" />
+        <splash height="1024" src="res/screens/ios/Default-Landscape@2x~ipad.png" width="1536" />
+        <splash height="2048" src="res/screens/ios/Default-Portrait@2x~ipad.png" width="1536" />
+        <splash height="1024" src="res/screens/ios/Default-Portrait~ipad.png" width="768" />
+        <splash height="768" src="res/screens/ios/Default@2x~ipad.png" width="1536" />
+        <splash height="1536" src="res/screens/ios/Default~ipad.png" width="2048" />
+
+        <preference name="DisallowOverscroll" value="true" />
+        <preference name="EnableViewportScale" value="false" />
+        <preference name="KeyboardDisplayRequiresUserAction" value="false" />
+        <preference name="SuppressesIncrementalRendering" value="true" />
+        <preference name="UIWebViewBounce" value="false" />
+        <preference name="UIApplicationExitsOnSuspend" value="false" />
+    </platform>
+
+    <!-- Android specific -->
+    <platform name="android">
+        <allow-intent href="market:*" />
+
+        <icon density="ldpi" src="res/icons/android/icon-36-ldpi.png" />
+        <icon density="mdpi" src="res/icons/android/icon-48-mdpi.png" />
+        <icon density="hdpi" src="res/icons/android/icon-72-hdpi.png" />
+        <icon density="xhdpi" src="res/icons/android/icon-96-xhdpi.png" />
+        <icon density="xxhdpi" src="res/icons/android/icon-144-xxhdpi.png" />
+        <icon density="xxxhdpi" src="res/icons/android/icon-192-xxxhdpi.png" />
+
+        <splash density="land-ldpi" src="res/screens/android/splash-land-ldpi.png" />
+        <splash density="land-mdpi" src="res/screens/android/splash-land-mdpi.png" />
+        <splash density="land-hdpi" src="res/screens/android/splash-land-hdpi.png" />
+        <splash density="land-xhdpi" src="res/screens/android/splash-land-xhdpi.png" />
+        <splash density="land-xxhdpi" src="res/screens/android/splash-land-xxhdpi.png" />
+        <splash density="land-xxxhdpi" src="res/screens/android/splash-land-xxxhdpi.png" />
+        <splash density="port-ldpi" src="res/screens/android/splash-port-ldpi.png" />
+        <splash density="port-mdpi" src="res/screens/android/splash-port-mdpi.png" />
+        <splash density="port-hdpi" src="res/screens/android/splash-port-hdpi.png" />
+        <splash density="port-xhdpi" src="res/screens/android/splash-port-xhdpi.png" />
+        <splash density="port-xxhdpi" src="res/screens/android/splash-port-xxhdpi.png" />
+        <splash density="port-xxxhdpi" src="res/screens/android/splash-port-xxxhdpi.png" />
+
+        <preference name="android-minSdkVersion" value="21" />
+        <preference name="android-targetSdkVersion" value="30" />
+        <preference name="android-compileSdkVersion" value="30" />
+        <preference name="AndroidPersistentFileLocation" value="Compatibility" />
+        <preference name="AndroidExtraFilesystems" value="files,files-external,documents,sdcard,cache,cache-external,assets,root" />
+        <preference name="LoadUrlTimeoutValue" value="60000" />
+        <preference name="KeepRunning" value="true" />
+    </platform>
+
+    <!-- Universal preferences -->
+    <preference name="Fullscreen" value="true" />
+    <preference name="Orientation" value="landscape" />
+    <preference name="target-device" value="universal" />
+    <preference name="deployment-target" value="8.0" />
+
+    <!-- Access rules -->
+    <access origin="*" />
+    <allow-navigation href="*" />
+    <allow-intent href="*" />
+
+    <!-- Hooks -->
+    <hook src="hooks/after_prepare.js" type="after_prepare" />
+</widget>

@@ -1,0 +1,29 @@
+{
+  "name": "velocityrush3d-server",
+  "version": "1.0.0",
+  "description": "Multiplayer server for VelocityRush3D",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "healthcheck": "node healthcheck.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "pg": "^8.11.0",
+    "redis": "^4.6.7",
+    "jsonwebtoken": "^9.0.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4",
+    "rate-limiter-flexible": "^3.0.4",
+    "winston": "^3.8.2"
+  },
+  "keywords": ["game", "multiplayer", "racing", "websocket"],
+  "author": "",
+  "license": "MIT"
+}</content>
+</xai:function_call">The server package.json file has been created with all necessary dependencies for production deployment.

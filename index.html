@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VelocityRush3D</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* Loading screen */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 1000;
+        }
+
+        #loading.success {
+            background: rgba(0,0,0,0.8);
+            animation: fadeOut 2s ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #uiContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.1);
+            display: block; /* Show menu by default */
+        }
+
+        #menu h1 {
+            margin-top: 0;
+            font-size: 36px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .menu-button {
+            display: block;
+            width: 200px;
+            margin: 10px auto;
+            padding: 12px 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #764ba2, #667eea);
+        }
+
+        #customization {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: none;
+            min-width: 250px;
+        }
+
+        #store {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: none;
+            max-height: 80vh;
+            overflow-y: auto;
+            min-width: 300px;
+        }
+
+        .store-item {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .store-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .store-item.rare { border-left: 4px solid #ff6b35; }
+        .store-item.epic { border-left: 4px solid #a855f7; }
+        .store-item.legendary { border-left: 4px solid #fbbf24; }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 25px);
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .color-option {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.2);
+        }
+
+        .color-option.selected {
+            border-color: white;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        /* Debug info */
+        #debug {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 400px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="debug"></div>
+    <div id="uiContainer">
+        <div id="hud">HUD: Speed: 0 | Position: -- | Lap: --/--</div>
+        <div id="menu">
+            <h1>VelocityRush3D</h1>
+            <p style="margin: 10px 0; font-size: 14px; opacity: 0.8;">3D Racing Game</p>
+            <button class="menu-button" id="startRace">🏁 Quick Race</button>
+            <button class="menu-button" id="multiplayer">🎮 Multiplayer</button>
+            <button class="menu-button" id="spectator">👁️ Spectator Mode</button>
+            <button class="menu-button" id="customize">🎨 Customize Vehicle</button>
+            <button class="menu-button" id="store">🛒 Store</button>
+            <button class="menu-button" id="trackEditor">🛠️ Track Editor</button>
+            <button class="menu-button" id="accessibility">♿ Accessibility</button>
+            <button class="menu-button" id="voiceChat">🎤 Voice Chat</button>
+            <button class="menu-button" id="streaming">📺 Streaming</button>
+            <button class="menu-button" id="settings">⚙️ Settings</button>
+        </div>
+        <div id="customization">
+            <h3>Vehicle Customization</h3>
+            <div>
+                <label>Vehicle Type:</label>
+                <select id="vehicleTypeSelect"></select>
+            </div>
+            <div>
+                <label>Paint Color:</label>
+                <div id="colorGrid" class="color-grid"></div>
+            </div>
+            <div>
+                <label>Presets:</label>
+                <select id="presetSelect">
+                    <option value="default">Default</option>
+                    <option value="sport">Sport</option>
+                    <option value="luxury">Luxury</option>
+                    <option value="offroad">Offroad</option>
+                </select>
+                <button id="applyPreset">Apply</button>
+            </div>
+            <div>
+                <button id="saveCustomization">Save</button>
+                <button id="closeCustomization">Close</button>
+            </div>
+        </div>
+        <div id="store">
+            <h3>Store</h3>
+            <div id="currencyDisplay">Credits: 0 | Gems: 0</div>
+            <div id="storeItems"></div>
+            <button id="closeStore">Close</button>
+        </div>
+    </div>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
