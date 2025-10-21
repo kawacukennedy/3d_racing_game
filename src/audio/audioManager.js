@@ -210,4 +210,37 @@ export class AudioManager {
 
         console.log('Audio manager cleaned up');
     }
+
+    // Settings methods
+    setMasterVolume(volume) {
+        this.masterVolume = volume;
+        Howler.volume(volume);
+    }
+
+    setMusicVolume(volume) {
+        this.musicVolume = volume;
+        // If there's background music, set its volume
+        if (this.backgroundMusic) {
+            this.backgroundMusic.volume(volume);
+        }
+    }
+
+    setSFXVolume(volume) {
+        this.sfxVolume = volume;
+        // Adjust collision and tire sounds
+        this.collisionSounds.forEach(sound => {
+            if (sound) sound.volume(volume * 0.5);
+        });
+        if (this.tireSquealSound) this.tireSquealSound.volume(volume * 0.2);
+    }
+
+    setScreenReader(enabled) {
+        this.screenReaderEnabled = enabled;
+        // Implementation for screen reader integration
+    }
+
+    setAudioCues(enabled) {
+        this.audioCuesEnabled = enabled;
+        // Enable/disable UI audio feedback
+    }
 }

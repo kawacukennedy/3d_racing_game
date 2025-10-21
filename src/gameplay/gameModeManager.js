@@ -413,4 +413,14 @@ export class GameModeManager {
             ...this.gameModes[id]
         }));
     }
+
+    setDifficulty(difficulty) {
+        this.difficulty = difficulty;
+        // Adjust AI behavior, item spawn rates, etc. based on difficulty
+        if (this.game.aiControllers) {
+            this.game.aiControllers.forEach(controller => {
+                controller.setDifficulty(difficulty);
+            });
+        }
+    }
 }

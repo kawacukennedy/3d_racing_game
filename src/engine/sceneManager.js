@@ -211,4 +211,26 @@ export class SceneManager {
             }
         });
     }
+
+    // Settings methods
+    setShadows(enabled) {
+        const directionalLight = this.scene.children.find(child => child.type === 'DirectionalLight');
+        if (directionalLight) {
+            directionalLight.castShadow = enabled;
+        }
+    }
+
+    setParticles(enabled) {
+        // Toggle particle systems if any
+        this.particlesEnabled = enabled;
+        // Implementation would depend on particle systems in the scene
+    }
+
+    setRenderDistance(distance) {
+        // Adjust camera far plane or LOD
+        if (this.camera) {
+            this.camera.far = distance;
+            this.camera.updateProjectionMatrix();
+        }
+    }
 }

@@ -156,4 +156,37 @@ export class VehicleController {
     setPhysicsVehicle(physicsVehicle) {
         this.physicsVehicle = physicsVehicle;
     }
+
+    // Accessibility methods
+    setControlScheme(scheme) {
+        this.controlScheme = scheme;
+        // Switch between keyboard, gamepad, touch
+        if (scheme === 'gamepad') {
+            this.setupGamepadControls();
+        } else if (scheme === 'touch') {
+            this.inputMode = 'mobile';
+        } else {
+            this.inputMode = 'keyboard';
+        }
+    }
+
+    setInvertY(invert) {
+        this.invertY = invert;
+    }
+
+    setSensitivity(sensitivity) {
+        this.sensitivity = sensitivity;
+    }
+
+    setupGamepadControls() {
+        // Gamepad input handling
+        this.gamepadConnected = false;
+        window.addEventListener('gamepadconnected', (e) => {
+            this.gamepadConnected = true;
+            this.gamepadIndex = e.gamepad.index;
+        });
+        window.addEventListener('gamepaddisconnected', () => {
+            this.gamepadConnected = false;
+        });
+    }
 }

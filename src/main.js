@@ -156,6 +156,11 @@ class Game {
         this.animate = this.animate.bind(this);
 
         this.init();
+
+        // Apply saved settings
+        this.uiManager.applySettings(this.uiManager.getSettings());
+        this.uiManager.applyAccessibilitySettings(this.uiManager.getAccessibilitySettings());
+
         this.animate();
     }
 
