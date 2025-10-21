@@ -4,10 +4,11 @@ import { AIController } from './aiController.js';
 import { VehicleConfigManager, VEHICLE_TYPES } from '../gameplay/vehicleConfig.js';
 
 export class SceneManager {
-    constructor(scene, world, physicsManager) {
+    constructor(scene, world, physicsManager, camera) {
         this.scene = scene;
         this.world = world;
         this.physicsManager = physicsManager;
+        this.camera = camera;
         this.loader = new GLTFLoader();
         this.track = null;
         this.playerVehicle = null;
@@ -217,6 +218,17 @@ export class SceneManager {
         const directionalLight = this.scene.children.find(child => child.type === 'DirectionalLight');
         if (directionalLight) {
             directionalLight.castShadow = enabled;
+            // Update shadow map if needed
+            if (enabled && !directionalLight.shadow.map) {
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 500;
+                directionalLight.shadow.camera.left = -100;
+                directionalLight.shadow.camera.right = 100;
+                directionalLight.shadow.camera.top = 100;
+                directionalLight.shadow.camera.bottom = -100;
+            }
         }
     }
 

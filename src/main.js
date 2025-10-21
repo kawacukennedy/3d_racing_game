@@ -125,7 +125,7 @@ class Game {
         this.composer.addPass(filmPass);
 
         this.physicsManager = new PhysicsManager();
-        this.sceneManager = new SceneManager(this.scene, this.physicsManager.world, this.physicsManager);
+        this.sceneManager = new SceneManager(this.scene, this.physicsManager.world, this.physicsManager, this.camera);
         this.vehicleController = new VehicleController();
         this.hud = new HUD();
         this.uiManager = new UIManager(this);
@@ -600,6 +600,12 @@ class Game {
         this.camera.lookAt(0, 0, 10);
 
         console.log('✅ Race camera setup');
+    }
+
+    startRace() {
+        console.log('🏁 Starting race...');
+        this.uiManager.hideMenu();
+        this.startRaceSimulation();
     }
 
     startRaceSimulation() {

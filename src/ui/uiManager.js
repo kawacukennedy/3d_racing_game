@@ -387,7 +387,7 @@ export class UIManager {
     openTrackEditor() {
         console.log('🛠️ Opening track editor...');
         if (this.game.trackEditor) {
-            this.game.trackEditor.show();
+            this.game.trackEditor.enterEditMode();
         } else {
             alert('Track Editor not available.');
         }
@@ -405,7 +405,8 @@ export class UIManager {
     startMultiplayer() {
         console.log('🎮 Starting multiplayer...');
         if (this.game.networkManager) {
-            this.game.networkManager.connectToServer();
+            this.game.networkManager.connect();
+            alert('Connecting to multiplayer server...');
         } else {
             alert('Multiplayer not available.');
         }
@@ -425,8 +426,8 @@ export class UIManager {
 
     toggleVoiceChat() {
         console.log('🎤 Toggling voice chat...');
-        if (this.game.audioManager && this.game.audioManager.voiceChatManager) {
-            this.game.audioManager.voiceChatManager.toggleVoiceChat();
+        if (this.game.voiceChatManager) {
+            this.game.voiceChatManager.toggleVoiceChat();
         } else {
             alert('Voice Chat not available.');
         }
