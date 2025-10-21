@@ -4,6 +4,7 @@ export class PhysicsManager {
     constructor() {
         this.world = new CANNON.World();
         this.vehicles = [];
+        this.vehicle = null;
         this.groundBody = null;
         this.onCollisionCallback = null;
     }
@@ -140,6 +141,7 @@ export class PhysicsManager {
         });
 
         this.vehicles.push(vehicle);
+        this.vehicle = vehicle; // Set as current vehicle for controls
 
         return vehicle;
     }

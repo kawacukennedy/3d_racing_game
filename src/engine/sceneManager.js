@@ -74,12 +74,15 @@ export class SceneManager {
         const config = this.vehicleConfigManager.getVehicleConfig(vehicleType || this.currentVehicleType);
 
         // Create physics vehicle with config
-        this.physicsManager.createVehicle({
+        const vehicle = this.physicsManager.createVehicle({
             mass: config.mass,
             geometry: config.geometry,
             friction: 0.3,
             restitution: 0.1
         });
+
+        // Set player vehicle body
+        this.playerVehicleBody = vehicle.chassisBody;
 
         // Create player vehicle mesh
         const vehicleGeometry = new THREE.BoxGeometry(
