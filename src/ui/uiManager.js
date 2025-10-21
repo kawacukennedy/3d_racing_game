@@ -20,6 +20,10 @@ export class UIManager {
             this.showStore();
         });
 
+        document.getElementById('settings').addEventListener('click', () => {
+            this.showSettings();
+        });
+
         document.getElementById('trackEditor').addEventListener('click', () => {
             this.openTrackEditor();
         });
@@ -60,6 +64,51 @@ export class UIManager {
 
         document.getElementById('closeStore').addEventListener('click', () => {
             this.hideStore();
+        });
+
+        document.getElementById('closeSettings').addEventListener('click', () => {
+            this.hideSettings();
+        });
+
+        document.getElementById('saveSettings').addEventListener('click', () => {
+            this.saveSettings();
+        });
+
+        document.getElementById('resetSettings').addEventListener('click', () => {
+            this.resetSettings();
+        });
+
+        document.getElementById('closeAccessibility').addEventListener('click', () => {
+            this.hideAccessibilitySettings();
+        });
+
+        document.getElementById('saveAccessibility').addEventListener('click', () => {
+            this.saveAccessibilitySettings();
+        });
+
+        document.getElementById('resetAccessibility').addEventListener('click', () => {
+            this.resetAccessibilitySettings();
+        });
+
+        document.getElementById('sensitivity').addEventListener('input', (e) => {
+            document.getElementById('sensitivityValue').textContent = e.target.value;
+        });
+
+        // Settings sliders
+        document.getElementById('renderDistance').addEventListener('input', (e) => {
+            document.getElementById('renderDistanceValue').textContent = e.target.value;
+        });
+
+        document.getElementById('masterVolume').addEventListener('input', (e) => {
+            document.getElementById('masterVolumeValue').textContent = e.target.value;
+        });
+
+        document.getElementById('musicVolume').addEventListener('input', (e) => {
+            document.getElementById('musicVolumeValue').textContent = e.target.value;
+        });
+
+        document.getElementById('sfxVolume').addEventListener('input', (e) => {
+            document.getElementById('sfxVolumeValue').textContent = e.target.value;
         });
 
         // Initialize HUD
@@ -149,37 +198,247 @@ export class UIManager {
 
     showSettings() {
         console.log('⚙️ Opening settings...');
-        alert('Settings panel coming soon! This will include graphics, audio, and gameplay options.');
+        this.hideMenu();
+        document.getElementById('settings').style.display = 'block';
+        this.loadSettings();
+    }
+
+    hideSettings() {
+        document.getElementById('settings').style.display = 'none';
+        this.showMenu();
+    }
+
+    loadSettings() {
+        const settings = this.getSettings();
+        document.getElementById('shadows').checked = settings.graphics.shadows;
+        document.getElementById('particles').checked = settings.graphics.particles;
+        document.getElementById('renderDistance').value = settings.graphics.renderDistance;
+        document.getElementById('renderDistanceValue').textContent = settings.graphics.renderDistance;
+
+        document.getElementById('masterVolume').value = settings.audio.master;
+        document.getElementById('masterVolumeValue').textContent = settings.audio.master;
+        document.getElementById('musicVolume').value = settings.audio.music;
+        document.getElementById('musicVolumeValue').textContent = settings.audio.music;
+        document.getElementById('sfxVolume').value = settings.audio.sfx;
+        document.getElementById('sfxVolumeValue').textContent = settings.audio.sfx;
+
+        document.getElementById('autoSave').checked = settings.gameplay.autoSave;
+        document.getElementById('showFPS').checked = settings.gameplay.showFPS;
+        document.getElementById('difficulty').value = settings.gameplay.difficulty;
+    }
+
+    saveSettings() {
+        const settings = {
+            graphics: {
+                shadows: document.getElementById('shadows').checked,
+                particles: document.getElementById('particles').checked,
+                renderDistance: parseInt(document.getElementById('renderDistance').value)
+            },
+            audio: {
+                master: parseInt(document.getElementById('masterVolume').value),
+                music: parseInt(document.getElementById('musicVolume').value),
+                sfx: parseInt(document.getElementById('sfxVolume').value)
+            },
+            gameplay: {
+                autoSave: document.getElementById('autoSave').checked,
+                showFPS: document.getElementById('showFPS').checked,
+                difficulty: document.getElementById('difficulty').value
+            }
+        };
+        localStorage.setItem('velocityRushSettings', JSON.stringify(settings));
+        alert('Settings saved!');
+        this.applySettings(settings);
+    }
+
+    resetSettings() {
+        localStorage.removeItem('velocityRushSettings');
+        this.loadSettings();
+        alert('Settings reset to default!');
+    }
+
+    getSettings() {
+        const defaultSettings = {
+            graphics: { shadows: true, particles: true, renderDistance: 1000 },
+            audio: { master: 80, music: 70, sfx: 90 },
+            gameplay: { autoSave: true, showFPS: false, difficulty: 'normal' }
+        };
+        const saved = localStorage.getItem('velocityRushSettings');
+        return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+    }
+
+    applySettings(settings) {
+        // Apply graphics settings
+        if (this.game.sceneManager) {
+            this.game.sceneManager.setShadows(settings.graphics.shadows);
+            this.game.sceneManager.setParticles(settings.graphics.particles);
+            this.game.sceneManager.setRenderDistance(settings.graphics.renderDistance);
+        }
+
+        // Apply audio settings
+        if (this.game.audioManager) {
+            this.game.audioManager.setMasterVolume(settings.audio.master / 100);
+            this.game.audioManager.setMusicVolume(settings.audio.music / 100);
+            this.game.audioManager.setSFXVolume(settings.audio.sfx / 100);
+        }
+
+        // Apply gameplay settings
+        if (settings.gameplay.showFPS) {
+            document.getElementById('debug').style.display = 'block';
+        } else {
+            document.getElementById('debug').style.display = 'none';
+        }
+
+        // Difficulty affects AI behavior, etc.
+        if (this.game.gameplayManager) {
+            this.game.gameplayManager.setDifficulty(settings.gameplay.difficulty);
+        }
+    }
+
+    loadAccessibilitySettings() {
+        const settings = this.getAccessibilitySettings();
+        document.getElementById('controlScheme').value = settings.controls.scheme;
+        document.getElementById('invertY').checked = settings.controls.invertY;
+        document.getElementById('sensitivity').value = settings.controls.sensitivity;
+        document.getElementById('sensitivityValue').textContent = settings.controls.sensitivity;
+
+        document.getElementById('textSize').value = settings.display.textSize;
+        document.getElementById('highContrast').checked = settings.display.highContrast;
+        document.getElementById('reduceMotion').checked = settings.display.reduceMotion;
+
+        document.getElementById('screenReader').checked = settings.audio.screenReader;
+        document.getElementById('audioCues').checked = settings.audio.audioCues;
+    }
+
+    saveAccessibilitySettings() {
+        const settings = {
+            controls: {
+                scheme: document.getElementById('controlScheme').value,
+                invertY: document.getElementById('invertY').checked,
+                sensitivity: parseFloat(document.getElementById('sensitivity').value)
+            },
+            display: {
+                textSize: document.getElementById('textSize').value,
+                highContrast: document.getElementById('highContrast').checked,
+                reduceMotion: document.getElementById('reduceMotion').checked
+            },
+            audio: {
+                screenReader: document.getElementById('screenReader').checked,
+                audioCues: document.getElementById('audioCues').checked
+            }
+        };
+        localStorage.setItem('velocityRushAccessibility', JSON.stringify(settings));
+        alert('Accessibility settings saved!');
+        this.applyAccessibilitySettings(settings);
+    }
+
+    resetAccessibilitySettings() {
+        localStorage.removeItem('velocityRushAccessibility');
+        this.loadAccessibilitySettings();
+        alert('Accessibility settings reset to default!');
+    }
+
+    getAccessibilitySettings() {
+        const defaultSettings = {
+            controls: { scheme: 'keyboard', invertY: false, sensitivity: 1.0 },
+            display: { textSize: 'medium', highContrast: false, reduceMotion: false },
+            audio: { screenReader: false, audioCues: false }
+        };
+        const saved = localStorage.getItem('velocityRushAccessibility');
+        return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+    }
+
+    applyAccessibilitySettings(settings) {
+        // Apply text size
+        document.body.style.fontSize = {
+            'small': '14px',
+            'medium': '16px',
+            'large': '18px',
+            'extra-large': '20px'
+        }[settings.display.textSize] || '16px';
+
+        // Apply high contrast
+        if (settings.display.highContrast) {
+            document.body.classList.add('high-contrast');
+        } else {
+            document.body.classList.remove('high-contrast');
+        }
+
+        // Apply reduce motion
+        if (settings.display.reduceMotion) {
+            document.body.style.setProperty('--animation-duration', '0s');
+        } else {
+            document.body.style.removeProperty('--animation-duration');
+        }
+
+        // Apply control scheme
+        if (this.game.inputManager) {
+            this.game.inputManager.setControlScheme(settings.controls.scheme);
+            this.game.inputManager.setInvertY(settings.controls.invertY);
+            this.game.inputManager.setSensitivity(settings.controls.sensitivity);
+        }
+
+        // Audio settings
+        if (this.game.audioManager) {
+            this.game.audioManager.setScreenReader(settings.audio.screenReader);
+            this.game.audioManager.setAudioCues(settings.audio.audioCues);
+        }
     }
 
     openTrackEditor() {
         console.log('🛠️ Opening track editor...');
-        alert('Track Editor coming soon! Create and customize your own racing tracks.');
+        if (this.game.trackEditor) {
+            this.game.trackEditor.show();
+        } else {
+            alert('Track Editor not available.');
+        }
     }
 
     enterSpectatorMode() {
         console.log('👁️ Entering spectator mode...');
-        alert('Spectator Mode coming soon! Watch other players race in real-time.');
+        if (this.game.spectatorMode) {
+            this.game.spectatorMode.activate();
+        } else {
+            alert('Spectator Mode not available in single-player.');
+        }
     }
 
     startMultiplayer() {
         console.log('🎮 Starting multiplayer...');
-        alert('Multiplayer coming soon! Join online races with players from around the world.');
+        if (this.game.networkManager) {
+            this.game.networkManager.connectToServer();
+        } else {
+            alert('Multiplayer not available.');
+        }
     }
 
     openAccessibilitySettings() {
         console.log('♿ Opening accessibility settings...');
-        alert('Accessibility Settings coming soon! Customize controls, text size, and more.');
+        this.hideMenu();
+        document.getElementById('accessibility').style.display = 'block';
+        this.loadAccessibilitySettings();
+    }
+
+    hideAccessibilitySettings() {
+        document.getElementById('accessibility').style.display = 'none';
+        this.showMenu();
     }
 
     toggleVoiceChat() {
         console.log('🎤 Toggling voice chat...');
-        alert('Voice Chat coming soon! Communicate with other racers during multiplayer games.');
+        if (this.game.audioManager && this.game.audioManager.voiceChatManager) {
+            this.game.audioManager.voiceChatManager.toggleVoiceChat();
+        } else {
+            alert('Voice Chat not available.');
+        }
     }
 
     toggleStreaming() {
         console.log('📺 Toggling streaming...');
-        alert('Streaming coming soon! Broadcast your races to viewers and earn rewards.');
+        if (this.game.streamingManager) {
+            this.game.streamingManager.toggleStreaming();
+        } else {
+            alert('Streaming not available.');
+        }
     }
 
     populateVehicleTypes() {
