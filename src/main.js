@@ -178,6 +178,10 @@ class Game {
         };
         window.addEventListener('resize', this.resizeHandler);
 
+        // Set vehicle references after scene init
+        this.playerVehicle = this.sceneManager.playerVehicle;
+        this.playerVehicleBody = this.sceneManager.playerVehicleBody;
+
         // Global keyboard shortcuts
         this.keydownHandler = (e) => {
             // Accessibility settings (Alt+A)
@@ -688,23 +692,29 @@ class Game {
     }
 
     updateRace() {
-        if (!this.raceActive || !this.playerVehicle) return;
+        if (!this.raceActive || !this.playerVehicleBody) return;
 
-        const speed = 0.5; // Base speed
-        const turnSpeed = 0.05;
+        const engineForce = 1500;
+        const brakeForce = 100;
+        const maxSteerValue = 0.4;
 
-        // Update vehicle position based on controls
+        // Apply engine force
         if (this.keys.forward) {
-            this.playerVehicle.position.z += speed;
+            this.playerVehicleBody.applyLocalForce(new CANNON.Vec3(0, 0, engineForce), new CANNON.Vec3(0, 0, 0));
         }
         if (this.keys.backward) {
-            this.playerVehicle.position.z -= speed * 0.5;
+            this.playerVehicleBody.applyLocalForce(new CANNON.Vec3(0, 0, -brakeForce), new CANNON.Vec3(0, 0, 0));
         }
-        if (this.keys.left) {
-            this.playerVehicle.rotation.y += turnSpeed;
-        }
-        if (this.keys.right) {
-            this.playerVehicle.rotation.y -= turnSpeed;
+
+        // Apply steering
+        let steerValue = 0;
+        if (this.keys.left) steerValue = maxSteerValue;
+        if (this.keys.right) steerValue = -maxSteerValue;
+
+        // Set steering for front wheels
+        if (this.physicsManager.vehicle) {
+            this.physicsManager.vehicle.setSteeringValue(steerValue, 0); // Front left
+            this.physicsManager.vehicle.setSteeringValue(steerValue, 1); // Front right
         }
 
         // Update camera to follow vehicle

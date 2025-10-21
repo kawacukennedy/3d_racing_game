@@ -579,9 +579,10 @@ export class UIManager {
         let position = '--';
         let lap = '--/--';
 
-        if (this.game.raceActive) {
-            // Calculate speed (simplified)
-            speed = Math.floor(Math.random() * 200); // Placeholder - would calculate from velocity
+        if (this.game.raceActive && this.game.playerVehicleBody) {
+            // Calculate speed from physics velocity
+            const velocity = this.game.playerVehicleBody.velocity;
+            speed = Math.floor(velocity.length() * 3.6); // m/s to km/h
 
             // Get race info
             position = this.game.playerPosition || 1;
