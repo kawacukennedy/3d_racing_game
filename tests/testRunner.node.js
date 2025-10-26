@@ -64,7 +64,7 @@ class NodeTestRunner {
         };
 
         // Mock AudioContext for audio manager
-        global.AudioContext = class MockAudioContext {
+        const MockAudioContext = class {
             constructor() {
                 this.currentTime = 0;
                 this.destination = {};
@@ -90,7 +90,11 @@ class NodeTestRunner {
                 };
             }
         };
-        global.webkitAudioContext = global.AudioContext;
+
+        global.AudioContext = MockAudioContext;
+        global.window.AudioContext = MockAudioContext;
+        global.webkitAudioContext = MockAudioContext;
+        global.window.webkitAudioContext = MockAudioContext;
 
         // Mock console for cleaner output
         this.originalConsole = { ...console };
