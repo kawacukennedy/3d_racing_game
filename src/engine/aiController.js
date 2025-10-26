@@ -12,6 +12,7 @@ export class AIController {
         this.waypoints = this.generateWaypoints();
         this.lookAheadDistance = 10;
         this.skillLevel = 0.8; // 0-1, affects reaction time and accuracy
+        this.difficulty = 'normal'; // easy, normal, hard, expert
 
         // Behavior tree components
         this.behaviorState = 'racing'; // racing, drafting, blocking, recovering
@@ -19,6 +20,9 @@ export class AIController {
         this.reactionTime = 0;
         this.lastDecisionTime = 0;
         this.rubberBanding = { boost: 0, brake: 0 };
+
+        // Difficulty-based settings
+        this.setDifficulty(this.difficulty);
 
         // Advanced AI features
         this.draftingTarget = null;
@@ -379,5 +383,254 @@ export class AIController {
 
     setSkillLevel(skill) {
         this.skillLevel = Math.max(0, Math.min(1, skill));
+    }
+
+    setDifficulty(difficulty) {
+        this.difficulty = difficulty;
+
+        // Adjust AI parameters based on difficulty
+        switch (difficulty) {
+            case 'easy':
+                this.skillLevel = 0.4;
+                this.maxEngineForce = 800;
+                this.maxSteerValue = 0.2;
+                this.reactionTime = 0.5; // Slower reactions
+                this.lookAheadDistance = 8;
+                break;
+
+            case 'normal':
+                this.skillLevel = 0.7;
+                this.maxEngineForce = 1200;
+                this.maxSteerValue = 0.3;
+                this.reactionTime = 0.2;
+                this.lookAheadDistance = 12;
+                break;
+
+            case 'hard':
+                this.skillLevel = 0.9;
+                this.maxEngineForce = 1500;
+                this.maxSteerValue = 0.35;
+                this.reactionTime = 0.1;
+                this.lookAheadDistance = 15;
+                break;
+
+            case 'expert':
+                this.skillLevel = 1.0;
+                this.maxEngineForce = 1800;
+                this.maxSteerValue = 0.4;
+                this.reactionTime = 0.05; // Very fast reactions
+                this.lookAheadDistance = 18;
+                break;
+
+            default:
+                this.setDifficulty('normal');
+                return;
+        }
+
+        console.log(`AI difficulty set to ${difficulty} (skill: ${this.skillLevel})`);
+    }
+
+    // Enhanced AI Racing Behaviors
+    update(deltaTime) {
+        if (!this.vehicle || !this.physicsVehicle) return;
+
+        this.reactionTime -= deltaTime;
+        if (this.reactionTime > 0) return; // Wait for reaction time
+
+        // Reset reaction time
+        this.reactionTime = this.getReactionTime();
+
+        // Update behavior state
+        this.updateBehaviorState();
+
+        // Execute current behavior
+        this.executeBehavior();
+    }
+
+    getReactionTime() {
+        // Base reaction time modified by skill level and personality
+        let baseTime = 0.15; // 150ms base
+
+        // Skill level affects reaction time (better AI reacts faster)
+        baseTime *= (1 - this.skillLevel * 0.5);
+
+        // Personality affects reaction time
+        switch (this.personality.type) {
+            case 'aggressive': baseTime *= 0.8; break; // Faster reactions
+            case 'defensive': baseTime *= 1.2; break; // Slower, more careful
+            case 'erratic': baseTime *= (0.5 + Math.random()); break; // Random
+        }
+
+        return Math.max(0.05, baseTime); // Minimum 50ms
+    }
+
+    updateBehaviorState() {
+        // Determine current racing situation and choose appropriate behavior
+
+        // Check if we should draft
+        if (this.shouldDraft()) {
+            this.behaviorState = 'drafting';
+        }
+        // Check if we should block
+        else if (this.shouldBlock()) {
+            this.behaviorState = 'blocking';
+        }
+        // Check if we need to recover from a mistake
+        else if (this.shouldRecover()) {
+            this.behaviorState = 'recovering';
+        }
+        // Default racing behavior
+        else {
+            this.behaviorState = 'racing';
+        }
+    }
+
+    shouldDraft() {
+        // Look for vehicles ahead to draft behind
+        // This would need access to other vehicles' positions
+        // For now, return false - drafting logic would be implemented here
+        return false;
+    }
+
+    shouldBlock() {
+        // Check if a faster car is approaching from behind
+        // This would need access to other vehicles' positions and speeds
+        return false;
+    }
+
+    shouldRecover() {
+        // Check if we're off-track or in a bad position
+        if (!this.vehicle) return false;
+
+        // Simple recovery: if we're not moving toward the next waypoint
+        const targetWaypoint = this.getTargetWaypoint();
+        if (!targetWaypoint) return false;
+
+        const toWaypoint = new THREE.Vector3().subVectors(targetWaypoint, this.vehicle.position);
+        const velocity = this.physicsVehicle.chassisBody.velocity;
+        const velocityDir = new THREE.Vector3(velocity.x, 0, velocity.z).normalize();
+
+        if (velocityDir.length() > 0) {
+            const dotProduct = velocityDir.dot(toWaypoint.normalize());
+            return dotProduct < 0.3; // Not moving toward waypoint
+        }
+
+        return true; // Not moving at all
+    }
+
+    executeBehavior() {
+        switch (this.behaviorState) {
+            case 'racing':
+                this.executeRacingBehavior();
+                break;
+            case 'drafting':
+                this.executeDraftingBehavior();
+                break;
+            case 'blocking':
+                this.executeBlockingBehavior();
+                break;
+            case 'recovering':
+                this.executeRecoveryBehavior();
+                break;
+        }
+    }
+
+    executeRacingBehavior() {
+        const targetWaypoint = this.getTargetWaypoint();
+        if (!targetWaypoint) return;
+
+        // Calculate steering toward waypoint
+        const steerValue = this.calculateSteering(this.vehicle.position, this.vehicle.rotation, targetWaypoint);
+
+        // Calculate throttle based on situation
+        const throttle = this.calculateThrottle(this.vehicle.position, targetWaypoint);
+
+        // Calculate braking
+        const brakeForce = this.calculateBraking(this.vehicle.position, targetWaypoint);
+
+        // Apply controls
+        this.applyControls(steerValue, throttle, brakeForce);
+    }
+
+    executeDraftingBehavior() {
+        // Follow closely behind another vehicle to reduce air resistance
+        // This would implement slipstreaming mechanics
+        this.executeRacingBehavior(); // For now, just race normally
+    }
+
+    executeBlockingBehavior() {
+        // Try to prevent faster cars from passing
+        // This could involve defensive driving maneuvers
+        this.executeRacingBehavior(); // For now, just race normally
+    }
+
+    executeRecoveryBehavior() {
+        // Try to get back on track or recover from a spin
+        const targetWaypoint = this.getTargetWaypoint();
+        if (!targetWaypoint) return;
+
+        // More aggressive steering to get back on track
+        const steerValue = this.calculateSteering(this.vehicle.position, this.vehicle.rotation, targetWaypoint) * 1.5;
+
+        // Conservative throttle
+        const throttle = 0.3;
+
+        // Light braking
+        const brakeForce = this.maxBrakeForce * 0.2;
+
+        this.applyControls(steerValue, throttle, brakeForce);
+    }
+
+    applyControls(steerValue, throttle, brakeForce) {
+        if (!this.physicsVehicle) return;
+
+        // Apply steering
+        this.physicsVehicle.setSteeringValue(steerValue, 0); // Front left
+        this.physicsVehicle.setSteeringValue(steerValue, 1); // Front right
+
+        // Apply engine force
+        const engineForce = throttle * this.maxEngineForce;
+        this.physicsVehicle.applyEngineForce(engineForce, 2); // Rear left
+        this.physicsVehicle.applyEngineForce(engineForce, 3); // Rear right
+
+        // Apply braking
+        if (brakeForce > 0) {
+            this.physicsVehicle.setBrake(brakeForce, 0); // Front left
+            this.physicsVehicle.setBrake(brakeForce, 1); // Front right
+            this.physicsVehicle.setBrake(brakeForce, 2); // Rear left
+            this.physicsVehicle.setBrake(brakeForce, 3); // Rear right
+        } else {
+            // Release brakes
+            this.physicsVehicle.setBrake(0, 0);
+            this.physicsVehicle.setBrake(0, 1);
+            this.physicsVehicle.setBrake(0, 2);
+            this.physicsVehicle.setBrake(0, 3);
+        }
+    }
+
+    // Racing statistics and learning
+    recordLapTime(lapTime) {
+        this.lapTimes.push(lapTime);
+
+        // Keep only last 5 lap times
+        if (this.lapTimes.length > 5) {
+            this.lapTimes.shift();
+        }
+
+        // Calculate average lap time for performance tracking
+        const avgLapTime = this.lapTimes.reduce((sum, time) => sum + time, 0) / this.lapTimes.length;
+        console.log(`${this.personality.name} completed lap in ${lapTime.toFixed(2)}ms (avg: ${avgLapTime.toFixed(2)}ms)`);
+    }
+
+    // Get AI status for debugging
+    getStatus() {
+        return {
+            difficulty: this.difficulty,
+            skillLevel: this.skillLevel,
+            behaviorState: this.behaviorState,
+            personality: this.personality,
+            lapTimes: this.lapTimes,
+            targetWaypoint: this.targetWaypoint
+        };
     }
 }

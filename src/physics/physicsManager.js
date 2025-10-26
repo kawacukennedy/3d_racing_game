@@ -7,6 +7,15 @@ export class PhysicsManager {
         this.vehicle = null;
         this.groundBody = null;
         this.onCollisionCallback = null;
+
+        // Enhanced physics properties
+        this.vehicleStates = new Map(); // vehicle -> state data
+        this.fuelConsumptionRate = 0.001; // Fuel per second at full throttle
+        this.tireWearRate = 0.0001; // Tire wear per second of sliding
+
+        // Drafting system
+        this.draftingDistance = 8; // Distance for drafting effect
+        this.draftingReduction = 0.3; // 30% reduction in drag when drafting
     }
 
     init() {
@@ -166,14 +175,11 @@ export class PhysicsManager {
                 wheel.wheelBody.quaternion.copy(wheel.worldTransform.quaternion);
             });
 
-            // Apply aerodynamic forces
-            this.applyAerodynamicForces();
+            // Apply advanced aerodynamic forces
+            this.applyAdvancedAerodynamics(vehicle, deltaTime);
 
-            // Update tire grip based on conditions
-            this.updateTireConditions();
-
-            // Check for collisions
-            this.checkCollisions();
+            // Update tire wear and conditions
+            this.updateTireWear(vehicle, deltaTime);
         });
     }
 
@@ -255,6 +261,269 @@ export class PhysicsManager {
 
     setCollisionCallback(callback) {
         this.onCollisionCallback = callback;
+    }
+
+    // Fuel System
+    initializeVehicleState(vehicle) {
+        this.vehicleStates.set(vehicle, {
+            fuel: 100, // 100% fuel
+            tireCondition: {
+                frontLeft: 100,
+                frontRight: 100,
+                rearLeft: 100,
+                rearRight: 100
+            },
+            engineTemp: 20, // Celsius
+            lastUpdate: Date.now()
+        });
+    }
+
+    consumeFuel(vehicle, throttle, deltaTime) {
+        if (!this.vehicleStates.has(vehicle)) {
+            this.initializeVehicleState(vehicle);
+        }
+
+        const state = this.vehicleStates.get(vehicle);
+        const fuelConsumption = this.fuelConsumptionRate * throttle * deltaTime * 60; // Scale to seconds
+        state.fuel = Math.max(0, state.fuel - fuelConsumption);
+
+        // Engine temperature increases with throttle
+        const tempIncrease = throttle * deltaTime * 2;
+        state.engineTemp = Math.min(120, state.engineTemp + tempIncrease);
+
+        return state.fuel;
+    }
+
+    refuel(vehicle, amount = 100) {
+        if (!this.vehicleStates.has(vehicle)) {
+            this.initializeVehicleState(vehicle);
+        }
+
+        const state = this.vehicleStates.get(vehicle);
+        state.fuel = Math.min(100, state.fuel + amount);
+        return state.fuel;
+    }
+
+    // Tire Wear System
+    updateTireWear(vehicle, deltaTime) {
+        if (!this.vehicleStates.has(vehicle)) {
+            this.initializeVehicleState(vehicle);
+        }
+
+        const state = this.vehicleStates.get(vehicle);
+
+        vehicle.wheelInfos.forEach((wheel, index) => {
+            const wheelName = ['frontLeft', 'frontRight', 'rearLeft', 'rearRight'][index];
+
+            // Tire wear based on slip
+            if (wheel.slipInfo > 0.5) {
+                const wearAmount = this.tireWearRate * wheel.slipInfo * deltaTime * 60;
+                state.tireCondition[wheelName] = Math.max(0, state.tireCondition[wheelName] - wearAmount);
+
+                // Reduce grip as tires wear
+                const gripMultiplier = state.tireCondition[wheelName] / 100;
+                wheel.frictionSlip = 2.0 * gripMultiplier;
+            }
+        });
+    }
+
+    changeTires(vehicle, tireType = 'standard') {
+        if (!this.vehicleStates.has(vehicle)) {
+            this.initializeVehicleState(vehicle);
+        }
+
+        const state = this.vehicleStates.get(vehicle);
+        const tireConditions = {
+            standard: 100,
+            soft: 80, // Better grip but wear faster
+            hard: 120, // Last longer but less grip
+            intermediate: 90 // For mixed conditions
+        };
+
+        Object.keys(state.tireCondition).forEach(wheel => {
+            state.tireCondition[wheel] = tireConditions[tireType] || 100;
+        });
+
+        console.log(`Changed tires to ${tireType} compound`);
+    }
+
+    // Enhanced Aerodynamics with Drafting
+    applyAdvancedAerodynamics(vehicle, deltaTime) {
+        if (!vehicle || !vehicle.chassisBody) return;
+
+        const velocity = vehicle.chassisBody.velocity;
+        const speed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
+
+        if (speed > 5) { // Only apply at higher speeds
+            // Check for drafting effect
+            const draftingMultiplier = this.calculateDraftingEffect(vehicle);
+
+            // Advanced drag calculation
+            const dragCoefficient = 0.25 * draftingMultiplier; // Reduced drag when drafting
+            const frontalArea = 2.0; // m²
+            const airDensity = 1.225; // kg/m³
+
+            // Quadratic drag
+            const dragForce = 0.5 * dragCoefficient * frontalArea * airDensity * speed * speed;
+
+            // Apply drag force
+            const dragDirection = new CANNON.Vec3(-velocity.x, 0, -velocity.z);
+            dragDirection.normalize();
+            dragDirection.scale(dragForce * 0.01, dragDirection); // Scale for game balance
+
+            vehicle.chassisBody.force.vadd(dragDirection, vehicle.chassisBody.force);
+
+            // Lift/downforce effects
+            const liftCoefficient = -0.3; // Negative for downforce
+            const liftForce = 0.5 * liftCoefficient * frontalArea * airDensity * speed * speed;
+
+            vehicle.chassisBody.force.y += liftForce * 0.1;
+
+            // Side force (yaw effect)
+            const sideForce = 0.1 * speed * speed * 0.001;
+            const lateralVelocity = new CANNON.Vec3(velocity.x, 0, velocity.z);
+            lateralVelocity.normalize();
+
+            // Apply side force perpendicular to velocity
+            const sideDirection = new CANNON.Vec3(-lateralVelocity.z, 0, lateralVelocity.x);
+            sideDirection.scale(sideForce, sideDirection);
+            vehicle.chassisBody.force.vadd(sideDirection, vehicle.chassisBody.force);
+        }
+    }
+
+    // Drafting System
+    calculateDraftingEffect(vehicle) {
+        if (!vehicle || !vehicle.chassisBody) return 1.0;
+
+        const vehiclePos = vehicle.chassisBody.position;
+        const vehicleVel = vehicle.chassisBody.velocity;
+        const vehicleSpeed = Math.sqrt(vehicleVel.x ** 2 + vehicleVel.z ** 2);
+
+        if (vehicleSpeed < 10) return 1.0; // No drafting at low speeds
+
+        let closestDraftingDistance = Infinity;
+        let isDrafting = false;
+
+        // Check distance to other vehicles
+        this.vehicles.forEach(otherVehicle => {
+            if (otherVehicle === vehicle || !otherVehicle.chassisBody) return;
+
+            const otherPos = otherVehicle.chassisBody.position;
+            const otherVel = otherVehicle.chassisBody.velocity;
+            const otherSpeed = Math.sqrt(otherVel.x ** 2 + otherVel.z ** 2);
+
+            // Only draft behind faster vehicles
+            if (otherSpeed <= vehicleSpeed) return;
+
+            const distance = Math.sqrt(
+                Math.pow(vehiclePos.x - otherPos.x, 2) +
+                Math.pow(vehiclePos.z - otherPos.z, 2)
+            );
+
+            if (distance < this.draftingDistance) {
+                // Check if we're behind the other vehicle
+                const toOther = new CANNON.Vec3(
+                    otherPos.x - vehiclePos.x,
+                    0,
+                    otherPos.z - vehiclePos.z
+                );
+                toOther.normalize();
+
+                const vehicleDir = new CANNON.Vec3(vehicleVel.x, 0, vehicleVel.z);
+                vehicleDir.normalize();
+
+                const dotProduct = vehicleDir.dot(toOther);
+                if (dotProduct > 0.7) { // Within 45 degrees behind
+                    isDrafting = true;
+                    closestDraftingDistance = Math.min(closestDraftingDistance, distance);
+                }
+            }
+        });
+
+        if (isDrafting) {
+            // Calculate drafting strength based on distance
+            const draftingStrength = Math.max(0, 1 - (closestDraftingDistance / this.draftingDistance));
+            const dragReduction = 1 - (this.draftingReduction * draftingStrength);
+
+            // Store drafting state for UI feedback
+            if (!this.vehicleStates.has(vehicle)) {
+                this.initializeVehicleState(vehicle);
+            }
+            const state = this.vehicleStates.get(vehicle);
+            state.isDrafting = true;
+            state.draftingStrength = draftingStrength;
+
+            return dragReduction;
+        } else {
+            // Clear drafting state
+            if (this.vehicleStates.has(vehicle)) {
+                const state = this.vehicleStates.get(vehicle);
+                state.isDrafting = false;
+                state.draftingStrength = 0;
+            }
+            return 1.0;
+        }
+    }
+
+    // Get drafting status for UI
+    getDraftingStatus(vehicle) {
+        if (!this.vehicleStates.has(vehicle)) return null;
+        const state = this.vehicleStates.get(vehicle);
+        return {
+            isDrafting: state.isDrafting || false,
+            strength: state.draftingStrength || 0
+        };
+    }
+
+    // Engine and Transmission
+    applyEngineForces(vehicle, throttle, brake, deltaTime) {
+        if (!vehicle || !vehicle.chassisBody) return;
+
+        const state = this.vehicleStates.get(vehicle);
+        if (!state) return;
+
+        // Check if we have fuel
+        if (state.fuel <= 0) {
+            throttle = 0; // No power without fuel
+        }
+
+        // Engine force based on throttle
+        const maxEngineForce = 2000;
+        const engineForce = maxEngineForce * throttle;
+
+        // Apply engine force
+        vehicle.chassisBody.applyLocalForce(
+            new CANNON.Vec3(0, 0, engineForce),
+            new CANNON.Vec3(0, 0, 0)
+        );
+
+        // Brake force
+        if (brake > 0) {
+            const maxBrakeForce = 1500;
+            const brakeForce = maxBrakeForce * brake;
+            vehicle.chassisBody.applyLocalForce(
+                new CANNON.Vec3(0, 0, -brakeForce),
+                new CANNON.Vec3(0, 0, 0)
+            );
+        }
+
+        // Consume fuel
+        this.consumeFuel(vehicle, throttle, deltaTime);
+    }
+
+    // Get vehicle status
+    getVehicleStatus(vehicle) {
+        if (!this.vehicleStates.has(vehicle)) {
+            this.initializeVehicleState(vehicle);
+        }
+
+        return this.vehicleStates.get(vehicle);
+    }
+
+    // Reset vehicle state
+    resetVehicleState(vehicle) {
+        this.vehicleStates.delete(vehicle);
+        this.initializeVehicleState(vehicle);
     }
 
     cleanup() {

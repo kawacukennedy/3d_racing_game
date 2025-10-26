@@ -1,0 +1,274 @@
+{
+  "timestamp": "2025-10-26T19:55:00.549Z",
+  "summary": {
+    "passed": 9,
+    "failed": 13,
+    "skipped": 0,
+    "total": 22,
+    "duration": 5931.922057999999,
+    "testResults": []
+  },
+  "testDetails": [
+    {
+      "name": "Physics Engine Initialization",
+      "category": "physics",
+      "priority": "high",
+      "status": "passed",
+      "duration": 333.74238500000047,
+      "error": null,
+      "result": {
+        "worldCreated": true,
+        "groundCreated": true
+      }
+    },
+    {
+      "name": "Vehicle Physics Creation",
+      "category": "physics",
+      "priority": "high",
+      "status": "passed",
+      "duration": 8.111427000000731,
+      "error": null,
+      "result": {
+        "vehicleCreated": true,
+        "wheelsCount": 4
+      }
+    },
+    {
+      "name": "Physics Simulation",
+      "category": "physics",
+      "priority": "high",
+      "status": "failed",
+      "duration": 35.35152900000048,
+      "error": "Cannot set properties of undefined (setting 'isInContact')",
+      "result": null
+    },
+    {
+      "name": "Three.js Scene Creation",
+      "category": "rendering",
+      "priority": "high",
+      "status": "failed",
+      "duration": 146.711636,
+      "error": "Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/testRunner.node.js",
+      "result": null
+    },
+    {
+      "name": "Vehicle Mesh Creation",
+      "category": "rendering",
+      "priority": "high",
+      "status": "failed",
+      "duration": 0.7528789999996661,
+      "error": "Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/testRunner.node.js",
+      "result": null
+    },
+    {
+      "name": "Vehicle Configuration Loading",
+      "category": "gameplay",
+      "priority": "high",
+      "status": "passed",
+      "duration": 1.8537670000005164,
+      "error": null,
+      "result": {
+        "configLoaded": true,
+        "vehicleType": "sports_car",
+        "mass": 1200,
+        "enginePower": 250
+      }
+    },
+    {
+      "name": "Customization System",
+      "category": "gameplay",
+      "priority": "medium",
+      "status": "passed",
+      "duration": 4.5477490000002945,
+      "error": null,
+      "result": {
+        "paintSet": true,
+        "decalAdded": true,
+        "customizationValid": true
+      }
+    },
+    {
+      "name": "Network Manager Initialization",
+      "category": "network",
+      "priority": "medium",
+      "status": "passed",
+      "duration": 313.29598800000076,
+      "error": null,
+      "result": {
+        "networkManagerCreated": true
+      }
+    },
+    {
+      "name": "Tournament System",
+      "category": "network",
+      "priority": "medium",
+      "status": "passed",
+      "duration": 3.932170000000042,
+      "error": null,
+      "result": {
+        "tournamentsCreated": 4,
+        "tournamentTypes": [
+          "single_elimination",
+          "time_trial",
+          "double_elimination",
+          "round_robin"
+        ]
+      }
+    },
+    {
+      "name": "Social Manager Initialization",
+      "category": "social",
+      "priority": "medium",
+      "status": "passed",
+      "duration": 4.228871999999683,
+      "error": null,
+      "result": {
+        "socialManagerCreated": true
+      }
+    },
+    {
+      "name": "Leaderboard System",
+      "category": "social",
+      "priority": "medium",
+      "status": "passed",
+      "duration": 33.202846000000136,
+      "error": null,
+      "result": {
+        "scoreSubmitted": true,
+        "rank": 1,
+        "achievements": [
+          {
+            "id": "achievement_1761508495496_rwdcy60o1",
+            "playerId": "test_player",
+            "achievementId": "speed_demon",
+            "description": "Reach 300+ km/h",
+            "unlockedAt": 1761508495496,
+            "rarity": "rare"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Basic Rendering Performance",
+      "category": "performance",
+      "priority": "high",
+      "status": "failed",
+      "duration": 5001.509696,
+      "error": "Performance test failed: 54.4 FPS < 55 FPS target",
+      "result": null
+    },
+    {
+      "name": "Memory Usage Check",
+      "category": "performance",
+      "priority": "high",
+      "status": "passed",
+      "duration": 0.18795499999941967,
+      "error": null,
+      "result": {
+        "memoryUsagePercent": "63.4",
+        "usedMB": "37.3",
+        "totalMB": "58.8"
+      }
+    },
+    {
+      "name": "Physics-Rendering Vehicle Synchronization",
+      "category": "integration",
+      "priority": "high",
+      "status": "failed",
+      "duration": 0.9810899999993126,
+      "error": "Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js",
+      "result": null
+    },
+    {
+      "name": "Physics-Rendering Wheel Synchronization",
+      "category": "integration",
+      "priority": "high",
+      "status": "failed",
+      "duration": 0.446273999999903,
+      "error": "Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js",
+      "result": null
+    },
+    {
+      "name": "Network-Gameplay Race Synchronization",
+      "category": "integration",
+      "priority": "high",
+      "status": "failed",
+      "duration": 19.326246000000538,
+      "error": "gameModeManager.startRace is not a function",
+      "result": null
+    },
+    {
+      "name": "Tournament-Network Integration",
+      "category": "integration",
+      "priority": "medium",
+      "status": "failed",
+      "duration": 1.2100099999988743,
+      "error": "tournamentManager.advanceRound is not a function",
+      "result": null
+    },
+    {
+      "name": "UI-Gameplay HUD Updates",
+      "category": "integration",
+      "priority": "medium",
+      "status": "failed",
+      "duration": 1.9545060000000376,
+      "error": "gameModeManager.startRace is not a function",
+      "result": null
+    },
+    {
+      "name": "UI-Gameplay Menu Navigation",
+      "category": "integration",
+      "priority": "medium",
+      "status": "failed",
+      "duration": 0.3615929999996297,
+      "error": "uiManager.startGame is not a function",
+      "result": null
+    },
+    {
+      "name": "Audio-Gameplay Engine Sounds",
+      "category": "integration",
+      "priority": "medium",
+      "status": "failed",
+      "duration": 12.423942000001261,
+      "error": "vehicleController.accelerate is not a function",
+      "result": null
+    },
+    {
+      "name": "Full Game Initialization",
+      "category": "integration",
+      "priority": "high",
+      "status": "failed",
+      "duration": 4.60317699999905,
+      "error": "Cannot find module '/Volumes/RCA/game/src/main.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js",
+      "result": null
+    },
+    {
+      "name": "Full Game Loop Execution",
+      "category": "integration",
+      "priority": "high",
+      "status": "failed",
+      "duration": 1.3064029999986815,
+      "error": "Cannot find module '/Volumes/RCA/game/src/main.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js",
+      "result": null
+    }
+  ],
+  "systemInfo": {
+    "platform": "darwin",
+    "arch": "x64",
+    "nodeVersion": "v24.9.0",
+    "memory": {
+      "rss": 112029696,
+      "heapTotal": 62361600,
+      "heapUsed": 41321376,
+      "external": 6058450,
+      "arrayBuffers": 2430951
+    }
+  },
+  "performance": {
+    "nodeUptime": 11.607245334,
+    "cpuUsage": {
+      "user": 2160183,
+      "system": 541151
+    }
+  }
+}

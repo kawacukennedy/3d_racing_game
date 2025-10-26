@@ -57,11 +57,57 @@ export class SceneManager {
         this.lodManager.registerObject('track_ground', ground, lodData);
         this.scene.add(ground);
 
+        // Initialize checkpoints for the track
+        this.initializeTrackCheckpoints();
+
+        // Initialize pit lane
+        this.initializePitLane();
+
         // TODO: Load actual track model
         // this.loader.load('assets/models/sample_track.glb', (gltf) => {
         //     this.track = gltf.scene;
         //     this.scene.add(this.track);
         // });
+    }
+
+    initializeTrackCheckpoints() {
+        // Create track data with checkpoints
+        const trackData = {
+            checkpoints: this.createTrackCheckpoints()
+        };
+
+        // Initialize checkpoints in game mode manager
+        if (this.game && this.game.gameModeManager) {
+            this.game.gameModeManager.initializeCheckpoints(trackData);
+        }
+    }
+
+    createTrackCheckpoints() {
+        // Create checkpoints around a circular track
+        const checkpoints = [];
+        const numCheckpoints = 8;
+        const trackRadius = 150; // Match the track size
+
+        for (let i = 0; i < numCheckpoints; i++) {
+            const angle = (i / numCheckpoints) * Math.PI * 2;
+            const x = Math.cos(angle) * trackRadius;
+            const z = Math.sin(angle) * trackRadius;
+
+            checkpoints.push({
+                id: i,
+                position: new THREE.Vector3(x, 2, z), // Slightly above ground
+                rotation: new THREE.Euler(0, angle + Math.PI / 2, 0)
+            });
+        }
+
+        return checkpoints;
+    }
+
+    initializePitLane() {
+        // Initialize pit lane in game mode manager
+        if (this.game && this.game.gameModeManager) {
+            this.game.gameModeManager.initializePitLane(null);
+        }
     }
 
     loadVehicle() {

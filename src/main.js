@@ -24,6 +24,8 @@ import { TrackEditor } from './tools/trackEditor.js';
 import { RankingManager } from './multiplayer/rankingManager.js';
 import { TournamentManager } from './multiplayer/tournamentManager.js';
 import { SocialManager } from './multiplayer/socialManager.js';
+import { ProgressionManager } from './gameplay/progressionManager.js';
+import { GameModeManager } from './gameplay/gameModeManager.js';
 import { MobileControls } from './ui/mobileControls.js';
 import { GameModeManager } from './gameplay/gameModeManager.js';
 import { AccessibilityManager } from './ui/accessibilityManager.js';
@@ -133,6 +135,8 @@ class Game {
         this.audioManager = new AudioManager();
         this.vehicleCustomization = new VehicleCustomization();
         this.analyticsManager = new AnalyticsManager();
+        this.progressionManager = new ProgressionManager(this);
+        this.gameModeManager = new GameModeManager(this);
         this.networkManager = new NetworkManager(this);
         this.leaderboardManager = new LeaderboardManager();
         this.storeManager = new StoreManager(this);
@@ -636,7 +640,8 @@ class Game {
             backward: false,
             left: false,
             right: false,
-            brake: false
+            brake: false,
+            pitStop: false
         };
 
         // Keyboard controls
@@ -662,6 +667,10 @@ class Game {
                     this.keys.brake = true;
                     e.preventDefault();
                     break;
+                case 'KeyP':
+                    this.keys.pitStop = true;
+                    e.preventDefault();
+                    break;
             }
         });
 
@@ -685,6 +694,9 @@ class Game {
                     break;
                 case 'Space':
                     this.keys.brake = false;
+                    break;
+                case 'KeyP':
+                    // Don't reset pitStop here - it's handled in the pit stop logic
                     break;
             }
         });
@@ -723,6 +735,24 @@ class Game {
         cameraOffset.applyEuler(new THREE.Euler(0, this.playerVehicle.rotation.y, 0));
         this.camera.position.copy(this.playerVehicle.position).add(cameraOffset);
         this.camera.lookAt(this.playerVehicle.position);
+
+        // Check checkpoint collisions
+        if (this.gameModeManager.checkCheckpointCollision(this.playerVehicle.position)) {
+            // Checkpoint passed - could add visual/audio feedback here
+        }
+
+        // Check pit lane entry/exit
+        if (!this.gameModeManager.inPitLane) {
+            this.gameModeManager.checkPitLaneEntry(this.playerVehicle.position);
+        } else {
+            this.gameModeManager.checkPitLaneExit(this.playerVehicle.position);
+        }
+
+        // Handle pit stop input (P key for pit stop)
+        if (this.keys.pitStop && !this.gameModeManager.pitStopActive) {
+            this.gameModeManager.startPitStop();
+            this.keys.pitStop = false; // Reset key
+        }
 
         // Update HUD
         this.uiManager.updateHUD();

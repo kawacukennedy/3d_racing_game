@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 export class GameModeManager {
     constructor(game) {
         this.game = game;
@@ -7,6 +9,19 @@ export class GameModeManager {
         this.modeTimer = 0;
         this.eliminationInterval = 30000; // 30 seconds
         this.lastElimination = 0;
+
+        // Checkpoint system
+        this.checkpoints = [];
+        this.currentCheckpoint = 0;
+        this.lapCount = 0;
+        this.totalLaps = 3; // Default 3 laps
+
+        // Pit stop system
+        this.pitLane = null;
+        this.inPitLane = false;
+        this.pitStopActive = false;
+        this.pitStopTimer = 0;
+        this.pitStopDuration = 8000; // 8 seconds for a full pit stop
 
         this.initializeGameModes();
     }
@@ -199,6 +214,9 @@ export class GameModeManager {
                 this.updateBattleMode(deltaTime);
                 break;
         }
+
+        // Update pit stops
+        this.updatePitStops(deltaTime);
     }
 
     updateDriftMode(deltaTime) {
@@ -420,6 +438,275 @@ export class GameModeManager {
         if (this.game.aiControllers) {
             this.game.aiControllers.forEach(controller => {
                 controller.setDifficulty(difficulty);
+            });
+        }
+    }
+
+    // Checkpoint System
+    initializeCheckpoints(trackData) {
+        if (trackData && trackData.checkpoints) {
+            this.checkpoints = trackData.checkpoints.map(cp => ({
+                id: cp.id,
+                position: cp.position,
+                rotation: cp.rotation,
+                passed: false,
+                lapTimes: []
+            }));
+        } else {
+            // Create default checkpoints if none provided
+            this.createDefaultCheckpoints();
+        }
+
+        this.currentCheckpoint = 0;
+        this.lapCount = 0;
+        console.log(`Initialized ${this.checkpoints.length} checkpoints`);
+    }
+
+    createDefaultCheckpoints() {
+        // Create basic checkpoints around a circular track
+        const numCheckpoints = 8;
+        this.checkpoints = [];
+
+        for (let i = 0; i < numCheckpoints; i++) {
+            const angle = (i / numCheckpoints) * Math.PI * 2;
+            const radius = 100; // Track radius
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+
+            this.checkpoints.push({
+                id: i,
+                position: new THREE.Vector3(x, 0, z),
+                rotation: new THREE.Euler(0, angle + Math.PI / 2, 0),
+                passed: false,
+                lapTimes: []
+            });
+        }
+    }
+
+    checkCheckpointCollision(playerPosition) {
+        if (this.checkpoints.length === 0) return false;
+
+        const checkpoint = this.checkpoints[this.currentCheckpoint];
+        const distance = playerPosition.distanceTo(checkpoint.position);
+
+        if (distance < 10) { // 10 units checkpoint radius
+            this.passCheckpoint();
+            return true;
+        }
+
+        return false;
+    }
+
+    passCheckpoint() {
+        const checkpoint = this.checkpoints[this.currentCheckpoint];
+        checkpoint.passed = true;
+        checkpoint.lapTimes.push(Date.now());
+
+        console.log(`Checkpoint ${this.currentCheckpoint + 1}/${this.checkpoints.length} passed`);
+
+        // Move to next checkpoint
+        this.currentCheckpoint++;
+
+        // Check if lap completed
+        if (this.currentCheckpoint >= this.checkpoints.length) {
+            this.completeLap();
+        }
+    }
+
+    completeLap() {
+        this.lapCount++;
+        this.currentCheckpoint = 0;
+
+        // Reset checkpoint states for next lap
+        this.checkpoints.forEach(cp => cp.passed = false);
+
+        const lapTime = this.calculateLapTime();
+        this.modeState.lapTimes.push(lapTime);
+
+        console.log(`Lap ${this.lapCount}/${this.totalLaps} completed in ${lapTime.toFixed(2)}ms`);
+
+        // Check race completion
+        if (this.lapCount >= this.totalLaps) {
+            this.endRace();
+        }
+    }
+
+    // Pit Stop System
+    initializePitLane(trackData) {
+        // Create pit lane area
+        this.pitLane = {
+            entryPoint: new THREE.Vector3(100, 0, 0), // Near track
+            exitPoint: new THREE.Vector3(120, 0, 0),  // Pit lane end
+            pitBoxes: [
+                { position: new THREE.Vector3(105, 0, -5), occupied: false },
+                { position: new THREE.Vector3(110, 0, -5), occupied: false },
+                { position: new THREE.Vector3(115, 0, -5), occupied: false }
+            ]
+        };
+
+        console.log('Pit lane initialized with 3 pit boxes');
+    }
+
+    checkPitLaneEntry(playerPosition) {
+        if (!this.pitLane || this.inPitLane) return false;
+
+        const distanceToEntry = playerPosition.distanceTo(this.pitLane.entryPoint);
+        if (distanceToEntry < 8) { // 8 units entry zone
+            this.enterPitLane();
+            return true;
+        }
+
+        return false;
+    }
+
+    enterPitLane() {
+        this.inPitLane = true;
+        console.log('Entered pit lane');
+
+        // Find available pit box
+        const availableBox = this.pitLane.pitBoxes.find(box => !box.occupied);
+        if (availableBox) {
+            availableBox.occupied = true;
+            this.currentPitBox = availableBox;
+            console.log('Pit box assigned');
+        }
+    }
+
+    checkPitLaneExit(playerPosition) {
+        if (!this.pitLane || !this.inPitLane) return false;
+
+        const distanceToExit = playerPosition.distanceTo(this.pitLane.exitPoint);
+        if (distanceToExit < 5) { // 5 units exit zone
+            this.exitPitLane();
+            return true;
+        }
+
+        return false;
+    }
+
+    exitPitLane() {
+        this.inPitLane = false;
+        if (this.currentPitBox) {
+            this.currentPitBox.occupied = false;
+            this.currentPitBox = null;
+        }
+        console.log('Exited pit lane');
+    }
+
+    startPitStop() {
+        if (!this.inPitLane || this.pitStopActive) return false;
+
+        this.pitStopActive = true;
+        this.pitStopTimer = 0;
+
+        console.log('Pit stop started - refueling and tire change');
+
+        // Trigger pit stop actions
+        this.performPitStopActions();
+
+        return true;
+    }
+
+    performPitStopActions() {
+        // Refuel the vehicle
+        if (this.game && this.game.physicsManager) {
+            this.game.physicsManager.refuel(this.game.physicsManager.vehicle, 100);
+        }
+
+        // Change tires to optimal compound
+        if (this.game && this.game.physicsManager) {
+            this.game.physicsManager.changeTires(this.game.physicsManager.vehicle, 'soft');
+        }
+
+        // Could add other pit stop actions here:
+        // - Adjust suspension
+        // - Clean windshield
+        // - Change brake pads
+        // - Repair minor damage
+    }
+
+    updatePitStop(deltaTime) {
+        if (!this.pitStopActive) return;
+
+        this.pitStopTimer += deltaTime * 1000; // Convert to milliseconds
+
+        if (this.pitStopTimer >= this.pitStopDuration) {
+            this.completePitStop();
+        }
+    }
+
+    completePitStop() {
+        this.pitStopActive = false;
+        this.pitStopTimer = 0;
+
+        console.log('Pit stop completed - vehicle ready to race');
+
+        // Notify UI
+        if (this.game && this.game.uiManager) {
+            this.game.uiManager.showPitStopComplete();
+        }
+    }
+
+    getPitStopStatus() {
+        return {
+            inPitLane: this.inPitLane,
+            pitStopActive: this.pitStopActive,
+            pitStopProgress: this.pitStopTimer / this.pitStopDuration,
+            pitBoxesOccupied: this.pitLane ? this.pitLane.pitBoxes.filter(box => box.occupied).length : 0,
+            totalPitBoxes: this.pitLane ? this.pitLane.pitBoxes.length : 0
+        };
+    }
+
+    // Update method for pit stops
+    updatePitStops(deltaTime) {
+        this.updatePitStop(deltaTime);
+    }
+
+    calculateLapTime() {
+        if (this.checkpoints.length === 0) return 0;
+
+        const firstCheckpoint = this.checkpoints[0];
+        const lastCheckpoint = this.checkpoints[this.checkpoints.length - 1];
+
+        if (firstCheckpoint.lapTimes.length > 0 && lastCheckpoint.lapTimes.length > 0) {
+            return lastCheckpoint.lapTimes[lastCheckpoint.lapTimes.length - 1] -
+                   firstCheckpoint.lapTimes[firstCheckpoint.lapTimes.length - 1];
+        }
+
+        return 0;
+    }
+
+    getCurrentPosition() {
+        // Calculate position based on lap progress and checkpoint progress
+        const lapProgress = (this.lapCount + (this.currentCheckpoint / this.checkpoints.length)) / this.totalLaps;
+        return Math.max(0, Math.min(1, lapProgress));
+    }
+
+    getRaceProgress() {
+        return {
+            currentLap: this.lapCount,
+            totalLaps: this.totalLaps,
+            currentCheckpoint: this.currentCheckpoint,
+            totalCheckpoints: this.checkpoints.length,
+            position: this.getCurrentPosition(),
+            lapTimes: [...this.modeState.lapTimes],
+            bestLapTime: this.modeState.lapTimes.length > 0 ? Math.min(...this.modeState.lapTimes) : null
+        };
+    }
+
+    endRace() {
+        const finalTime = this.modeState.lapTimes.reduce((sum, time) => sum + time, 0);
+        const bestLap = this.modeState.lapTimes.length > 0 ? Math.min(...this.modeState.lapTimes) : 0;
+
+        console.log(`Race completed! Total time: ${finalTime.toFixed(2)}ms, Best lap: ${bestLap.toFixed(2)}ms`);
+
+        // Trigger race end event
+        if (this.game.uiManager) {
+            this.game.uiManager.showRaceResults({
+                totalTime: finalTime,
+                bestLapTime: bestLap,
+                lapTimes: this.modeState.lapTimes,
+                position: 1 // Player finished first
             });
         }
     }
