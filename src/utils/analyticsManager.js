@@ -24,7 +24,7 @@ export class AnalyticsManager {
             user: []
         };
 
-        this.loadAnalyticsData();
+        this.loadStoredData();
     }
 
     loadStoredData() {
@@ -117,7 +117,7 @@ export class AnalyticsManager {
 
     trackDistance(distance) {
         this.metrics.totalDistance += distance;
-        this.saveAnalyticsData();
+        this.saveData();
     }
 
     // Performance Monitoring
@@ -257,7 +257,7 @@ export class AnalyticsManager {
             }
         });
 
-        this.saveAnalyticsData();
+        this.saveData();
         return errorInfo;
     }
 
@@ -281,7 +281,7 @@ export class AnalyticsManager {
             timestamp: Date.now()
         });
 
-        this.saveAnalyticsData();
+        this.saveData();
         return errorInfo;
     }
 
@@ -312,7 +312,7 @@ export class AnalyticsManager {
             timestamp: Date.now()
         });
 
-        this.saveAnalyticsData();
+        this.saveData();
     }
 
     // User Behavior Analytics
@@ -455,7 +455,7 @@ export class AnalyticsManager {
 
         // Auto-save analytics every minute
         setInterval(() => {
-            this.saveAnalyticsData();
+            this.saveData();
         }, 60000);
     }
 
