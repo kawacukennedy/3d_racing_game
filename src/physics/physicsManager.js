@@ -16,14 +16,6 @@ export class PhysicsManager {
         this.world.defaultContactMaterial.friction = 0.4;
         this.world.defaultContactMaterial.restitution = 0.3;
 
-        // Create contact material for vehicle-ground interaction
-        const vehicleGroundContact = new CANNON.ContactMaterial(
-            this.groundBody.material,
-            new CANNON.Material({ friction: 0.3, restitution: 0.1 }),
-            { friction: 0.9, restitution: 0.1 }
-        );
-        this.world.addContactMaterial(vehicleGroundContact);
-
         // Create ground
         const groundShape = new CANNON.Plane();
         const groundMaterial = new CANNON.Material({ friction: 0.8, restitution: 0.1 });
@@ -31,6 +23,14 @@ export class PhysicsManager {
         this.groundBody.addShape(groundShape);
         this.groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
         this.world.addBody(this.groundBody);
+
+        // Create contact material for vehicle-ground interaction
+        const vehicleGroundContact = new CANNON.ContactMaterial(
+            this.groundBody.material,
+            new CANNON.Material({ friction: 0.3, restitution: 0.1 }),
+            { friction: 0.9, restitution: 0.1 }
+        );
+        this.world.addContactMaterial(vehicleGroundContact);
 
         // Create raycast vehicle
         this.createVehicle();

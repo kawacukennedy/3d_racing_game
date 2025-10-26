@@ -63,6 +63,35 @@ class NodeTestRunner {
             clear: () => {}
         };
 
+        // Mock AudioContext for audio manager
+        global.AudioContext = class MockAudioContext {
+            constructor() {
+                this.currentTime = 0;
+                this.destination = {};
+            }
+            createOscillator() {
+                return {
+                    connect: () => {},
+                    frequency: { setValueAtTime: () => {} },
+                    type: 'sawtooth'
+                };
+            }
+            createGain() {
+                return {
+                    connect: () => {},
+                    gain: { setValueAtTime: () => {} }
+                };
+            }
+            createBuffer() {
+                return {
+                    getChannelData: () => new Float32Array(1024),
+                    length: 1024,
+                    sampleRate: 44100
+                };
+            }
+        };
+        global.webkitAudioContext = global.AudioContext;
+
         // Mock console for cleaner output
         this.originalConsole = { ...console };
         console.log = (...args) => this.log('log', ...args);

@@ -55,6 +55,10 @@ export class AudioManager {
     createSynthesizedEngineSound() {
         // Create a simple synthesized engine sound using Web Audio API
         // This is a placeholder for actual audio files
+        if (typeof window === 'undefined') {
+            console.log('Audio synthesis not available in Node.js environment');
+            return;
+        }
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
