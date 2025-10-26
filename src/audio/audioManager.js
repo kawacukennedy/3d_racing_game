@@ -170,15 +170,11 @@ export class AudioManager {
         }
     }
 
-    setListenerPosition(position) {
-        this.listenerPosition = position;
-    }
+     setListenerPosition(position) {
+         this.listenerPosition = position;
+     }
 
-    setMasterVolume(volume) {
-        Howler.volume(volume);
-    }
-
-    pauseAll() {
+     pauseAll() {
         Howler.pause();
     }
 
