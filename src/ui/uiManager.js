@@ -10,7 +10,7 @@ export class UIManager {
     init() {
         // Menu controls
         document.getElementById('startRace').addEventListener('click', () => {
-            this.startRace();
+            this.startQuickRace();
         });
 
         document.getElementById('gameModeSelect').addEventListener('change', (e) => {
