@@ -8,17 +8,32 @@ export class CloudSaveManager {
         this.conflictResolution = 'server_wins'; // 'server_wins', 'client_wins', 'manual'
     }
 
-    // Authentication (simplified - would connect to real auth service)
-    login(username, password) {
-        // Simulate login - in real implementation, this would call an API
-        if (username && password) {
-            this.userId = `user_${Date.now()}`;
-            this.isLoggedIn = true;
-            localStorage.setItem('cloud_user_id', this.userId);
-            console.log(`Logged in as ${username}`);
-            return { success: true, userId: this.userId };
+    // Authentication with real backend
+    async login(username, password) {
+        try {
+            const response = await fetch('/api/cloud/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.userId = data.userId;
+                this.isLoggedIn = true;
+                localStorage.setItem('cloud_user_id', this.userId);
+                console.log(`Logged in as ${username}`);
+                return { success: true, userId: this.userId };
+            } else {
+                return { success: false, reason: data.error || 'Login failed' };
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            return { success: false, reason: 'Network error' };
         }
-        return { success: false, reason: 'Invalid credentials' };
     }
 
     logout() {
@@ -111,25 +126,43 @@ export class CloudSaveManager {
         return data;
     }
 
-    getCloudData() {
-        // Simulate fetching from cloud (using different localStorage key)
+    async getCloudData() {
         try {
-            const cloudData = localStorage.getItem(`cloud_data_${this.userId}`);
-            return cloudData ? JSON.parse(cloudData) : {};
+            const response = await fetch(`/api/cloud/load/${this.userId}`);
+            if (response.status === 404) {
+                return {}; // No data found
+            }
+            const data = await response.json();
+            return data;
         } catch (error) {
             console.error('Failed to get cloud data:', error);
             return {};
         }
     }
 
-    saveCloudData(data) {
-        // Simulate saving to cloud
-        const cloudData = {
-            ...data,
-            syncedAt: Date.now(),
-            version: '1.0'
-        };
-        localStorage.setItem(`cloud_data_${this.userId}`, JSON.stringify(cloudData));
+    async saveCloudData(data) {
+        try {
+            const response = await fetch('/api/cloud/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: this.userId,
+                    gameData: {
+                        ...data,
+                        syncedAt: Date.now(),
+                        version: '1.0'
+                    }
+                })
+            });
+
+            const result = await response.json();
+            return result.success;
+        } catch (error) {
+            console.error('Failed to save cloud data:', error);
+            return false;
+        }
     }
 
     saveLocalData(data) {

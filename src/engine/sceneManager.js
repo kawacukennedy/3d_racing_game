@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AIController } from './aiController.js';
 import { VehicleConfigManager, VEHICLE_TYPES } from '../gameplay/vehicleConfig.js';
+import { LODManager } from './lodManager.js';
 
 export class SceneManager {
     constructor(scene, world, physicsManager, camera) {
@@ -18,6 +19,7 @@ export class SceneManager {
         this.aiControllers = [];
         this.vehicleConfigManager = new VehicleConfigManager();
         this.currentVehicleType = VEHICLE_TYPES.SPORTS_CAR;
+        this.lodManager = new LODManager(camera);
     }
 
     init() {
@@ -47,12 +49,12 @@ export class SceneManager {
     }
 
     loadTrack() {
-        // For now, create a simple ground plane as placeholder
-        const groundGeometry = new THREE.PlaneGeometry(100, 100);
-        const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        // Create ground plane with LOD
+        const trackConfig = { color: 0x228B22 };
+        const lodData = this.lodManager.createTrackLODData(trackConfig);
+        const ground = new THREE.Mesh();
         ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
+        this.lodManager.registerObject('track_ground', ground, lodData);
         this.scene.add(ground);
 
         // TODO: Load actual track model
@@ -84,15 +86,10 @@ export class SceneManager {
         // Set player vehicle body
         this.playerVehicleBody = vehicle.chassisBody;
 
-        // Create player vehicle mesh
-        const vehicleGeometry = new THREE.BoxGeometry(
-            config.geometry.width,
-            config.geometry.height,
-            config.geometry.length
-        );
-        const vehicleMaterial = new THREE.MeshLambertMaterial({ color: config.color });
-        this.playerVehicle = new THREE.Mesh(vehicleGeometry, vehicleMaterial);
-        this.playerVehicle.castShadow = true;
+        // Create player vehicle mesh with LOD
+        const lodData = this.lodManager.createVehicleLODData(config);
+        this.playerVehicle = new THREE.Mesh();
+        this.lodManager.registerObject('player_vehicle', this.playerVehicle, lodData);
         this.scene.add(this.playerVehicle);
 
         // Create wheel meshes
@@ -113,6 +110,7 @@ export class SceneManager {
 
         // Remove current vehicle
         if (this.playerVehicle) {
+            this.lodManager.unregisterObject('player_vehicle');
             this.scene.remove(this.playerVehicle);
         }
         this.playerWheelMeshes.forEach(mesh => {
@@ -141,13 +139,14 @@ export class SceneManager {
             const z = Math.sin(angle) * radius;
             aiVehiclePhysics.chassisBody.position.set(x, 2, z);
 
-            // Create AI vehicle mesh
-            const vehicleGeometry = new THREE.BoxGeometry(2, 1, 4);
-            const vehicleMaterial = new THREE.MeshLambertMaterial({
-                color: 0x00ff00 + (i * 0x001100) // Different green shades
-            });
-            const aiVehicle = new THREE.Mesh(vehicleGeometry, vehicleMaterial);
-            aiVehicle.castShadow = true;
+            // Create AI vehicle mesh with LOD
+            const aiConfig = {
+                geometry: { width: 2, height: 1, length: 4 },
+                color: 0x00ff00 + (i * 0x001100)
+            };
+            const lodData = this.lodManager.createVehicleLODData(aiConfig);
+            const aiVehicle = new THREE.Mesh();
+            this.lodManager.registerObject(`ai_vehicle_${i}`, aiVehicle, lodData);
             this.scene.add(aiVehicle);
 
             // Create AI wheel meshes
@@ -214,6 +213,9 @@ export class SceneManager {
                 });
             }
         });
+
+        // Update LOD system
+        this.lodManager.update(deltaTime);
     }
 
     // Settings methods

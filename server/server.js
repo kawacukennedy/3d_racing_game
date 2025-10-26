@@ -3,12 +3,16 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
 const io = new SocketIOServer(server, {
     cors: {
         origin: "*",
@@ -20,6 +24,9 @@ const io = new SocketIOServer(server, {
 const games = new Map();
 const waitingPlayers = [];
 const connectedPlayers = new Map();
+
+// Cloud save storage (in production, use a database)
+const cloudSaves = new Map();
 
 class GameRoom {
     constructor(roomId) {
@@ -140,12 +147,20 @@ io.on('connection', (socket) => {
         if (player && player.currentRoom) {
             const room = games.get(player.currentRoom);
             if (room) {
-                room.updatePlayer(socket.id, data);
-                // Broadcast to other players in room
-                socket.to(player.currentRoom).emit('playerUpdate', {
-                    playerId: socket.id,
-                    ...data
-                });
+                // Anti-cheat validation
+                if (this.validatePositionUpdate(socket.id, data, room)) {
+                    room.updatePlayer(socket.id, data);
+                    // Broadcast to other players in room
+                    socket.to(player.currentRoom).emit('playerUpdate', {
+                        playerId: socket.id,
+                        ...data
+                    });
+                } else {
+                    // Invalid update - kick player or warn
+                    console.warn(`Invalid position update from ${socket.id}`);
+                    socket.emit('cheatDetected', { reason: 'Invalid position update' });
+                    // Could disconnect: socket.disconnect();
+                }
             }
         }
     });
@@ -156,12 +171,18 @@ io.on('connection', (socket) => {
         if (player && player.currentRoom) {
             const room = games.get(player.currentRoom);
             if (room) {
-                room.updatePlayer(socket.id, { lap: data.lap, checkpoint: data.checkpoint });
-                io.to(player.currentRoom).emit('lapUpdate', {
-                    playerId: socket.id,
-                    lap: data.lap,
-                    checkpoint: data.checkpoint
-                });
+                // Validate lap completion
+                if (validateLapCompletion(socket.id, data, room)) {
+                    room.updatePlayer(socket.id, { lap: data.lap, checkpoint: data.checkpoint });
+                    io.to(player.currentRoom).emit('lapUpdate', {
+                        playerId: socket.id,
+                        lap: data.lap,
+                        checkpoint: data.checkpoint
+                    });
+                } else {
+                    console.warn(`Invalid lap completion from ${socket.id}`);
+                    socket.emit('cheatDetected', { reason: 'Invalid lap completion' });
+                }
             }
         }
     });
@@ -209,6 +230,101 @@ io.on('connection', (socket) => {
     });
 });
 
+// Anti-cheat validation
+function validatePositionUpdate(playerId, newData, room) {
+    const player = room.players.get(playerId);
+    if (!player) return false;
+
+    const oldPos = player.position;
+    const newPos = newData.position;
+
+    if (!newPos || typeof newPos.x !== 'number' || typeof newPos.y !== 'number' || typeof newPos.z !== 'number') {
+        return false; // Invalid position data
+    }
+
+    // Check for teleportation (distance too large)
+    const distance = Math.sqrt(
+        Math.pow(newPos.x - oldPos.x, 2) +
+        Math.pow(newPos.y - oldPos.y, 2) +
+        Math.pow(newPos.z - oldPos.z, 2)
+    );
+
+    const maxDistancePerUpdate = 10; // Adjust based on physics
+    if (distance > maxDistancePerUpdate) {
+        console.warn(`Player ${playerId} teleported ${distance} units`);
+        return false;
+    }
+
+    // Check speed limits
+    const velocity = newData.velocity;
+    if (velocity) {
+        const speed = Math.sqrt(
+            Math.pow(velocity.x, 2) +
+            Math.pow(velocity.y, 2) +
+            Math.pow(velocity.z, 2)
+        );
+
+        const maxSpeed = 50; // Adjust based on vehicle max speed
+        if (speed > maxSpeed) {
+            console.warn(`Player ${playerId} exceeded speed limit: ${speed}`);
+            return false;
+        }
+    }
+
+    // Check for flying (Y position too high)
+    const maxHeight = 10; // Adjust based on track
+    if (newPos.y > maxHeight) {
+        console.warn(`Player ${playerId} flying at height ${newPos.y}`);
+        return false;
+    }
+
+    // Check for underground (Y position too low)
+    const minHeight = -5;
+    if (newPos.y < minHeight) {
+        console.warn(`Player ${playerId} underground at height ${newPos.y}`);
+        return false;
+    }
+
+    return true;
+}
+
+function validateLapCompletion(playerId, data, room) {
+    const player = room.players.get(playerId);
+    if (!player) return false;
+
+    // Check if lap number is sequential
+    if (data.lap !== player.lap + 1) {
+        console.warn(`Player ${playerId} skipped lap ${player.lap} to ${data.lap}`);
+        return false;
+    }
+
+    // Check if checkpoint is valid (simplified - would need track data)
+    if (data.checkpoint < 0 || data.checkpoint > 10) { // Assume 10 checkpoints
+        console.warn(`Player ${playerId} invalid checkpoint ${data.checkpoint}`);
+        return false;
+    }
+
+    // Check timing - laps should take reasonable time
+    const now = Date.now();
+    if (player.lastLapTime) {
+        const lapTime = now - player.lastLapTime;
+        const minLapTime = 10000; // 10 seconds minimum
+        const maxLapTime = 300000; // 5 minutes maximum
+
+        if (lapTime < minLapTime) {
+            console.warn(`Player ${playerId} completed lap too fast: ${lapTime}ms`);
+            return false;
+        }
+        if (lapTime > maxLapTime) {
+            console.warn(`Player ${playerId} took too long for lap: ${lapTime}ms`);
+            return false;
+        }
+    }
+
+    player.lastLapTime = now;
+    return true;
+}
+
 function tryCreateGame() {
     if (waitingPlayers.length >= 2) {
         // Create a new game room
@@ -239,6 +355,86 @@ function tryCreateGame() {
         }, 1000);
     }
 }
+
+// Cloud save API endpoints
+app.post('/api/cloud/save', (req, res) => {
+    try {
+        const { userId, gameData } = req.body;
+
+        if (!userId || !gameData) {
+            return res.status(400).json({ error: 'Missing userId or gameData' });
+        }
+
+        // Save to cloud storage
+        cloudSaves.set(userId, {
+            ...gameData,
+            syncedAt: Date.now(),
+            version: gameData.version || 1
+        });
+
+        // Also save to file for persistence
+        const savePath = path.join(__dirname, 'saves', `${userId}.json`);
+        fs.mkdirSync(path.dirname(savePath), { recursive: true });
+        fs.writeFileSync(savePath, JSON.stringify(cloudSaves.get(userId), null, 2));
+
+        console.log(`Saved cloud data for user ${userId}`);
+        res.json({ success: true, syncedAt: Date.now() });
+    } catch (error) {
+        console.error('Cloud save error:', error);
+        res.status(500).json({ error: 'Failed to save data' });
+    }
+});
+
+app.get('/api/cloud/load/:userId', (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Try to load from memory first
+        let saveData = cloudSaves.get(userId);
+
+        // If not in memory, try to load from file
+        if (!saveData) {
+            const savePath = path.join(__dirname, 'saves', `${userId}.json`);
+            if (fs.existsSync(savePath)) {
+                const fileData = fs.readFileSync(savePath, 'utf8');
+                saveData = JSON.parse(fileData);
+                cloudSaves.set(userId, saveData);
+            }
+        }
+
+        if (!saveData) {
+            return res.status(404).json({ error: 'No save data found' });
+        }
+
+        res.json(saveData);
+    } catch (error) {
+        console.error('Cloud load error:', error);
+        res.status(500).json({ error: 'Failed to load data' });
+    }
+});
+
+app.post('/api/cloud/login', (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        // Simple authentication (in production, use proper auth)
+        if (!username) {
+            return res.status(400).json({ error: 'Username required' });
+        }
+
+        // Generate a simple user ID based on username
+        const userId = `user_${Buffer.from(username).toString('base64').replace(/[^a-zA-Z0-9]/g, '')}`;
+
+        res.json({
+            success: true,
+            userId: userId,
+            username: username
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Login failed' });
+    }
+});
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../dist')));

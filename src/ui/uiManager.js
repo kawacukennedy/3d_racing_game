@@ -4,12 +4,17 @@ export class UIManager {
         this.menuVisible = false;
         this.customizationVisible = false;
         this.selectedColor = null;
+        this.selectedGameMode = 'standard';
     }
 
     init() {
         // Menu controls
         document.getElementById('startRace').addEventListener('click', () => {
-            this.startQuickRace();
+            this.startRace();
+        });
+
+        document.getElementById('gameModeSelect').addEventListener('change', (e) => {
+            this.selectedGameMode = e.target.value;
         });
 
         document.getElementById('customize').addEventListener('click', () => {
@@ -120,6 +125,10 @@ export class UIManager {
 
     startQuickRace() {
         console.log('🏁 Starting quick race...');
+        // Set selected game mode
+        if (this.game.gameModeManager) {
+            this.game.gameModeManager.setGameMode(this.selectedGameMode);
+        }
         this.hideMenu();
         this.showHUD();
         this.game.startQuickRace();
