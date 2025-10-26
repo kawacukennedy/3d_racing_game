@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+
 export class LODManager {
     constructor(camera) {
         this.camera = camera;
@@ -360,7 +362,7 @@ export class LODManager {
 
         if (geometries.length === 0) return new THREE.BufferGeometry();
 
-        return THREE.BufferGeometryUtils.mergeBufferGeometries(geometries);
+        return BufferGeometryUtils.mergeBufferGeometries(geometries);
     }
 
     /**
