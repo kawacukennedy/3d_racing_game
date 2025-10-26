@@ -34,7 +34,7 @@ jobs:
       run: npm run test
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-${{ matrix.node-version }}
@@ -66,7 +66,7 @@ jobs:
       run: npm run test:e2e
 
     - name: Upload E2E test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: e2e-results
@@ -100,7 +100,7 @@ jobs:
         npm run build:android
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
         path: |
@@ -147,7 +147,7 @@ jobs:
         # Add performance comparison logic here
 
     - name: Upload performance report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-report
         path: performance-report.json
@@ -201,7 +201,7 @@ jobs:
         npx pa11y-ci --config .pa11yci.json || true
 
     - name: Upload accessibility report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: accessibility-report
