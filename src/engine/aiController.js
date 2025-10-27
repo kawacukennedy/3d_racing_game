@@ -171,11 +171,24 @@ export class AIController {
             }
         }
 
+        // Handle power-up hunting
+        if (this.behaviorState === 'powerup_hunt') {
+            // Check if reached power-up or timeout
+            if (this.powerUpTarget && vehiclePosition.distanceTo(this.powerUpTarget) < 2) {
+                this.behaviorState = 'racing';
+                this.powerUpTarget = null;
+            } else if (!this.powerUpTarget || Math.random() < 0.05) { // 5% chance per update to give up
+                this.behaviorState = 'racing';
+                this.powerUpTarget = null;
+            }
+        }
+
         // Reset to racing if no special behavior applies
         if (!hasNearbyOpponents || Math.random() < 0.1) {
             this.behaviorState = 'racing';
             this.draftingTarget = null;
             this.blockingTarget = null;
+            this.powerUpTarget = null;
         }
     }
 
@@ -210,6 +223,12 @@ export class AIController {
                 if (this.draftingTarget) {
                     const draftOffset = new THREE.Vector3(0, 0, 2); // Position behind
                     return baseWaypoint.clone().add(draftOffset);
+                }
+                break;
+            case 'powerup_hunt':
+                // Target the power-up position
+                if (this.powerUpTarget) {
+                    return this.powerUpTarget;
                 }
                 break;
             case 'recovering':
@@ -517,6 +536,9 @@ export class AIController {
             case 'recovering':
                 this.executeRecoveryBehavior();
                 break;
+            case 'powerup_hunt':
+                this.executePowerUpHuntBehavior();
+                break;
         }
     }
 
@@ -566,6 +588,17 @@ export class AIController {
         this.applyControls(steerValue, throttle, brakeForce);
     }
 
+    executePowerUpHuntBehavior() {
+        // Drive towards the power-up position
+        if (!this.powerUpTarget) return;
+
+        const steerValue = this.calculateSteering(this.vehicle.position, this.vehicle.rotation, this.powerUpTarget);
+        const throttle = this.calculateThrottle(this.vehicle.position, this.powerUpTarget);
+        const brakeForce = this.calculateBraking(this.vehicle.position, this.powerUpTarget);
+
+        this.applyControls(steerValue, throttle, brakeForce);
+    }
+
     applyControls(steerValue, throttle, brakeForce) {
         if (!this.physicsVehicle) return;
 
@@ -608,6 +641,12 @@ export class AIController {
     }
 
     // Get AI status for debugging
+    targetPowerUp(position) {
+        // Set temporary target to power-up position
+        this.powerUpTarget = position;
+        this.behaviorState = 'powerup_hunt';
+    }
+
     getStatus() {
         return {
             difficulty: this.difficulty,

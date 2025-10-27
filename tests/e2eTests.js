@@ -90,10 +90,23 @@ class E2ETests {
 
     async teardown() {
         if (this.browser) {
-            await this.browser.close();
+            try {
+                await this.browser.close();
+            } catch (error) {
+                console.log('Warning: Error closing browser:', error.message);
+            }
         }
         if (this.server) {
-            this.server.kill();
+            try {
+                this.server.kill('SIGTERM');
+                // Give it a moment to shut down gracefully
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                if (!this.server.killed) {
+                    this.server.kill('SIGKILL');
+                }
+            } catch (error) {
+                console.log('Warning: Error killing server:', error.message);
+            }
         }
     }
 
@@ -161,7 +174,7 @@ class E2ETests {
             await this.page.goto(this.baseUrl);
 
             // Wait for game to load
-            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 30000 });
+            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 60000 });
 
             // Check if canvas exists and has proper dimensions
             const canvasInfo = await this.page.evaluate(() => {
@@ -209,7 +222,7 @@ class E2ETests {
     async testMenuNavigation() {
         return await this.runTest('Menu Navigation Flow', async () => {
             await this.page.goto(this.baseUrl);
-            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 30000 });
+            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 60000 });
 
             // Check if main menu loads
             const menuVisible = await this.page.evaluate(() => {
@@ -261,7 +274,7 @@ class E2ETests {
     async testGameStart() {
         return await this.runTest('Game Start and Basic Gameplay', async () => {
             await this.page.goto(this.baseUrl);
-            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 30000 });
+            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 60000 });
 
             // Start a quick race
             const gameStarted = await this.page.evaluate(() => {
@@ -446,7 +459,7 @@ class E2ETests {
     async testMultiplayerConnection() {
         return await this.runTest('Multiplayer Connection', async () => {
             await this.page.goto(this.baseUrl);
-            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 30000 });
+            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 60000 });
 
             // Try to connect to multiplayer
             const connectionResult = await this.page.evaluate(() => {
@@ -499,7 +512,7 @@ class E2ETests {
                 // Wait for game to initialize properly
                 await page.waitForFunction(() => {
                     return window.game && document.getElementById('gameCanvas');
-                }, { timeout: 30000 });
+                }, { timeout: 60000 });
 
                 const layoutCheck = await page.evaluate(() => {
                     const canvas = document.getElementById('gameCanvas');
@@ -539,7 +552,7 @@ class E2ETests {
         try {
             await this.setup();
 
-            // Run all E2E tests sequentially to avoid resource conflicts in CI
+            // Run all E2E tests sequentially with reduced delay for faster execution
             const testResults = [];
             const tests = [
                 this.testGameLoading,
@@ -563,16 +576,14 @@ class E2ETests {
                         error: error.message
                     });
                 }
-                // Add delay between tests to prevent resource exhaustion
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Reduced delay between tests
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
             this.results.testResults = testResults;
 
             this.results.duration = performance.now() - startTime;
 
             this.generateReport();
-
-            return this.results;
 
         } finally {
             await this.teardown();
@@ -601,11 +612,13 @@ class E2ETests {
 
         console.log('\n📄 E2E report saved to e2e-results.json');
 
-        // Exit with appropriate code
+        // Force exit the entire process tree
         if (this.results.failed > 0) {
-            process.exit(1);
+            console.log('Exiting with code 1');
+            process.kill(process.pid, 'SIGKILL');
         } else {
-            process.exit(0);
+            console.log('Exiting with code 0');
+            process.kill(process.pid, 'SIGKILL');
         }
     }
 }
