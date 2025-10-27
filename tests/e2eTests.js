@@ -494,9 +494,12 @@ class E2ETests {
             for (const viewport of viewports) {
                 const page = await this.browser.newPage();
                 await page.setViewport({ width: viewport.width, height: viewport.height });
-                await page.goto(this.baseUrl);
+                await page.goto(this.baseUrl, { waitUntil: 'networkidle0' });
 
-                await page.waitForSelector('#gameCanvas', { timeout: 10000 });
+                // Wait for game to initialize properly
+                await page.waitForFunction(() => {
+                    return window.game && document.getElementById('gameCanvas');
+                }, { timeout: 30000 });
 
                 const layoutCheck = await page.evaluate(() => {
                     const canvas = document.getElementById('gameCanvas');
