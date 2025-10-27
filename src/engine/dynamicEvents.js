@@ -206,7 +206,7 @@ export class DynamicEvents {
 
     generateEventData(eventType) {
         switch (eventType) {
-            case 'weather_change':
+            case 'weather_change': {
                 const weather = this.eventTypes.weather_change.weathers[
                     Math.floor(Math.random() * this.eventTypes.weather_change.weathers.length)
                 ];
@@ -214,8 +214,9 @@ export class DynamicEvents {
                     weather: weather,
                     intensity: Math.random() * 0.5 + 0.5
                 };
+            }
 
-            case 'hazard_spawn':
+            case 'hazard_spawn': {
                 const hazard = this.eventTypes.hazard_spawn.hazards[
                     Math.floor(Math.random() * this.eventTypes.hazard_spawn.hazards.length)
                 ];
@@ -224,8 +225,9 @@ export class DynamicEvents {
                     position: this.generateRandomTrackPosition(),
                     radius: hazard === 'oil_spill' ? 3 : 1
                 };
+            }
 
-            case 'power_up_spawn':
+            case 'power_up_spawn': {
                 const powerUp = this.eventTypes.power_up_spawn.powerUps[
                     Math.floor(Math.random() * this.eventTypes.power_up_spawn.powerUps.length)
                 ];
@@ -234,8 +236,9 @@ export class DynamicEvents {
                     position: this.generateRandomTrackPosition(),
                     value: Math.random() * 100 + 50 // Point value
                 };
+            }
 
-            case 'track_modification':
+            case 'track_modification': {
                 const modification = this.eventTypes.track_modification.modifications[
                     Math.floor(Math.random() * this.eventTypes.track_modification.modifications.length)
                 ];
@@ -245,8 +248,9 @@ export class DynamicEvents {
                     radius: 10,
                     effect: modification === 'speed_zone' ? 1.5 : 0.7
                 };
+            }
 
-            case 'environmental_effect':
+            case 'environmental_effect': {
                 const effect = this.eventTypes.environmental_effect.effects[
                     Math.floor(Math.random() * this.eventTypes.environmental_effect.effects.length)
                 ];
@@ -254,29 +258,36 @@ export class DynamicEvents {
                     effectType: effect,
                     intensity: Math.random() * 0.8 + 0.2
                 };
+            }
 
-            default:
+            default: {
                 return {};
+            }
         }
     }
 
     executeEvent(event) {
         switch (event.type) {
-            case 'weather_change':
+            case 'weather_change': {
                 this.executeWeatherChange(event);
                 break;
-            case 'hazard_spawn':
+            }
+            case 'hazard_spawn': {
                 this.executeHazardSpawn(event);
                 break;
-            case 'power_up_spawn':
+            }
+            case 'power_up_spawn': {
                 this.executePowerUpSpawn(event);
                 break;
-            case 'track_modification':
+            }
+            case 'track_modification': {
                 this.executeTrackModification(event);
                 break;
-            case 'environmental_effect':
+            }
+            case 'environmental_effect': {
                 this.executeEnvironmentalEffect(event);
                 break;
+            }
         }
     }
 
@@ -342,15 +353,18 @@ export class DynamicEvents {
 
     executeEnvironmentalEffect(event) {
         switch (event.data.effectType) {
-            case 'wind_gust':
+            case 'wind_gust': {
                 this.applyWindGust(event.data.intensity);
                 break;
-            case 'earthquake':
+            }
+            case 'earthquake': {
                 this.applyEarthquake(event.data.intensity);
                 break;
-            case 'time_dilation':
+            }
+            case 'time_dilation': {
                 this.applyTimeDilation(event.data.intensity);
                 break;
+            }
         }
     }
 
@@ -546,20 +560,22 @@ export class DynamicEvents {
             if (distance <= zone.radius) {
                 // Apply zone effect
                 switch (zone.type) {
-                    case 'speed_zone':
+                    case 'speed_zone': {
                         // Temporarily boost speed
                         if (!vehicle.zoneBoost) {
                             vehicle.zoneBoost = true;
                             vehicle.maxEngineForce *= zone.effect;
                         }
                         break;
-                    case 'slow_zone':
+                    }
+                    case 'slow_zone': {
                         // Temporarily reduce speed
                         if (!vehicle.zoneSlow) {
                             vehicle.zoneSlow = true;
                             vehicle.maxEngineForce *= zone.effect;
                         }
                         break;
+                    }
                 }
             } else {
                 // Reset zone effects when leaving zone
@@ -622,9 +638,10 @@ export class DynamicEvents {
 
     resetEnvironmentalEffect(effectType) {
         switch (effectType) {
-            case 'time_dilation':
+            case 'time_dilation': {
                 console.log('⏰ Time dilation reset');
                 break;
+            }
         }
     }
 

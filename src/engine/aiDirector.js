@@ -188,32 +188,36 @@ export class AIDirector {
 
     generateEventData(eventType) {
         switch (eventType) {
-            case 'overtake_opportunity':
+            case 'overtake_opportunity': {
                 return {
                     position: Math.floor(Math.random() * this.aiControllers.length),
                     duration: 10000
                 };
+            }
 
-            case 'position_battle':
+            case 'position_battle': {
                 return {
                     positions: [1, 2], // Positions involved in battle
                     intensity: Math.random() * 0.5 + 0.5
                 };
+            }
 
-            case 'caution_period':
+            case 'caution_period': {
                 return {
                     reason: 'incident',
                     affectedArea: 'sector_2'
                 };
+            }
 
-            case 'weather_change':
+            case 'weather_change': {
                 const weathers = ['rain', 'fog', 'wind'];
                 return {
                     newWeather: weathers[Math.floor(Math.random() * weathers.length)],
                     intensity: Math.random()
                 };
+            }
 
-            case 'hazard_appearance':
+            case 'hazard_appearance': {
                 return {
                     hazardType: 'oil_spill',
                     position: new THREE.Vector3(
@@ -223,8 +227,9 @@ export class AIDirector {
                     ),
                     radius: 3
                 };
+            }
 
-            case 'power_up_spawn':
+            case 'power_up_spawn': {
                 return {
                     powerUpType: 'boost',
                     position: new THREE.Vector3(
@@ -233,32 +238,40 @@ export class AIDirector {
                         (Math.random() - 0.5) * 30
                     )
                 };
+            }
 
-            default:
+            default: {
                 return {};
+            }
         }
     }
 
     executeEvent(event) {
         switch (event.type) {
-            case 'overtake_opportunity':
+            case 'overtake_opportunity': {
                 this.executeOvertakeOpportunity(event);
                 break;
-            case 'position_battle':
+            }
+            case 'position_battle': {
                 this.executePositionBattle(event);
                 break;
-            case 'caution_period':
+            }
+            case 'caution_period': {
                 this.executeCautionPeriod(event);
                 break;
-            case 'weather_change':
+            }
+            case 'weather_change': {
                 this.executeWeatherChange(event);
                 break;
-            case 'hazard_appearance':
+            }
+            case 'hazard_appearance': {
                 this.executeHazardAppearance(event);
                 break;
-            case 'power_up_spawn':
+            }
+            case 'power_up_spawn': {
                 this.executePowerUpSpawn(event);
                 break;
+            }
         }
     }
 
