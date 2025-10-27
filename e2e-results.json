@@ -1,0 +1,18 @@
+{
+  "passed": 1,
+  "failed": 0,
+  "total": 1,
+  "duration": 34358.176303,
+  "testResults": [
+    {
+      "name": "Game Loading and Initialization",
+      "status": "passed",
+      "duration": 11939.055485999997,
+      "result": {
+        "canvasReady": true,
+        "dimensions": "800x600",
+        "initialized": true
+      }
+    }
+  ]
+}

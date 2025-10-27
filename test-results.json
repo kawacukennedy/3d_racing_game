@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-10-27T03:35:59.859Z",
+  "timestamp": "2025-10-27T04:31:00.578Z",
   "summary": {
     "passed": 22,
     "failed": 0,
     "skipped": 0,
     "total": 22,
-    "duration": 6011.413064,
+    "duration": 6260.592093,
     "testResults": []
   },
   "testDetails": [
@@ -14,7 +14,7 @@
       "category": "physics",
       "priority": "high",
       "status": "passed",
-      "duration": 214.23058200000014,
+      "duration": 342.3554430000004,
       "error": null,
       "result": {
         "worldCreated": true,
@@ -26,7 +26,7 @@
       "category": "physics",
       "priority": "high",
       "status": "passed",
-      "duration": 18.896408000000065,
+      "duration": 8.688830000000053,
       "error": null,
       "result": {
         "vehicleCreated": true,
@@ -38,11 +38,11 @@
       "category": "physics",
       "priority": "high",
       "status": "passed",
-      "duration": 130.38847299999998,
+      "duration": 117.44543299999987,
       "error": null,
       "result": {
         "initialY": 2,
-        "finalY": 2.719973606366559,
+        "finalY": 2.581482693885093,
         "moved": true
       }
     },
@@ -51,7 +51,7 @@
       "category": "rendering",
       "priority": "high",
       "status": "passed",
-      "duration": 168.7701020000004,
+      "duration": 226.93556399999989,
       "error": null,
       "result": {
         "sceneCreated": true,
@@ -63,7 +63,7 @@
       "category": "rendering",
       "priority": "high",
       "status": "passed",
-      "duration": 41.950712000000294,
+      "duration": 39.79320000000007,
       "error": null,
       "result": {
         "vehicleMeshCreated": true,
@@ -75,7 +75,7 @@
       "category": "gameplay",
       "priority": "high",
       "status": "passed",
-      "duration": 0.4031110000000808,
+      "duration": 0.45478800000000774,
       "error": null,
       "result": {
         "configLoaded": true,
@@ -89,7 +89,7 @@
       "category": "gameplay",
       "priority": "medium",
       "status": "passed",
-      "duration": 4.711884999999711,
+      "duration": 15.731131000000005,
       "error": null,
       "result": {
         "paintSet": true,
@@ -102,7 +102,7 @@
       "category": "network",
       "priority": "medium",
       "status": "passed",
-      "duration": 345.297775,
+      "duration": 371.3424299999997,
       "error": null,
       "result": {
         "networkManagerCreated": true
@@ -113,7 +113,7 @@
       "category": "network",
       "priority": "medium",
       "status": "passed",
-      "duration": 3.7760880000000725,
+      "duration": 4.397291000000223,
       "error": null,
       "result": {
         "tournamentsCreated": 4,
@@ -130,7 +130,7 @@
       "category": "social",
       "priority": "medium",
       "status": "passed",
-      "duration": 3.781593000000157,
+      "duration": 10.242494999999508,
       "error": null,
       "result": {
         "socialManagerCreated": true
@@ -141,18 +141,18 @@
       "category": "social",
       "priority": "medium",
       "status": "passed",
-      "duration": 4.692173999999795,
+      "duration": 8.821390000000065,
       "error": null,
       "result": {
         "scoreSubmitted": true,
         "rank": 1,
         "achievements": [
           {
-            "id": "achievement_1761536154783_g85dylyo7",
+            "id": "achievement_1761539455463_5967vdrvv",
             "playerId": "test_player",
             "achievementId": "speed_demon",
             "description": "Reach 300+ km/h",
-            "unlockedAt": 1761536154783,
+            "unlockedAt": 1761539455463,
             "rarity": "rare"
           }
         ]
@@ -163,12 +163,12 @@
       "category": "performance",
       "priority": "high",
       "status": "passed",
-      "duration": 5004.2598499999995,
+      "duration": 5007.198761,
       "error": null,
       "result": {
-        "avgFPS": 53.35935505870533,
-        "totalFrames": 267,
-        "duration": 5003.808604999999,
+        "avgFPS": 57.771350909781354,
+        "totalFrames": 289,
+        "duration": 5002.479524,
         "targetMet": true
       }
     },
@@ -177,12 +177,12 @@
       "category": "performance",
       "priority": "high",
       "status": "passed",
-      "duration": 0.1960849999995844,
+      "duration": 0.3006920000007085,
       "error": null,
       "result": {
-        "memoryUsagePercent": "52.8",
-        "usedMB": "32.3",
-        "totalMB": "61.3"
+        "memoryUsagePercent": "51.5",
+        "usedMB": "31.9",
+        "totalMB": "62.1"
       }
     },
     {
@@ -190,7 +190,7 @@
       "category": "integration",
       "priority": "high",
       "status": "passed",
-      "duration": 8.5776079999996,
+      "duration": 17.296602999998868,
       "error": null,
       "result": {
         "physicsPosition": {
@@ -211,7 +211,7 @@
       "category": "integration",
       "priority": "high",
       "status": "passed",
-      "duration": 17.79888000000028,
+      "duration": 54.73039599999902,
       "error": null,
       "result": {
         "wheelsSynchronized": true,
@@ -224,7 +224,7 @@
       "category": "integration",
       "priority": "high",
       "status": "passed",
-      "duration": 15.061899000000267,
+      "duration": 4.462820999999167,
       "error": null,
       "result": {
         "raceStarted": true,
@@ -237,7 +237,7 @@
       "category": "integration",
       "priority": "medium",
       "status": "passed",
-      "duration": 3.0530840000010357,
+      "duration": 3.1575950000005832,
       "error": null,
       "result": {
         "tournamentJoined": true,
@@ -251,7 +251,7 @@
       "category": "integration",
       "priority": "medium",
       "status": "passed",
-      "duration": 2.9236559999990277,
+      "duration": 3.656935999999405,
       "error": null,
       "result": {
         "hudUpdated": true,
@@ -265,7 +265,7 @@
       "category": "integration",
       "priority": "medium",
       "status": "passed",
-      "duration": 1.1593859999993583,
+      "duration": 0.9238150000001042,
       "error": null,
       "result": {
         "menuNavigation": true,
@@ -280,7 +280,7 @@
       "category": "integration",
       "priority": "medium",
       "status": "passed",
-      "duration": 20.47587399999975,
+      "duration": 21.307800000000498,
       "error": null,
       "result": {
         "audioInitialized": true,
@@ -293,7 +293,7 @@
       "category": "integration",
       "priority": "high",
       "status": "passed",
-      "duration": 0.19631499999923108,
+      "duration": 0.30178499999965425,
       "error": null,
       "result": {
         "gameInitialized": true,
@@ -312,7 +312,7 @@
       "category": "integration",
       "priority": "high",
       "status": "passed",
-      "duration": 0.04597799999828567,
+      "duration": 0.06650699999954668,
       "error": null,
       "result": {
         "framesExecuted": 60,
@@ -328,18 +328,18 @@
     "arch": "x64",
     "nodeVersion": "v24.9.0",
     "memory": {
-      "rss": 119533568,
-      "heapTotal": 65245184,
-      "heapUsed": 39956064,
-      "external": 4173497,
-      "arrayBuffers": 545998
+      "rss": 123383808,
+      "heapTotal": 66293760,
+      "heapUsed": 39863504,
+      "external": 4114010,
+      "arrayBuffers": 486511
     }
   },
   "performance": {
-    "nodeUptime": 8.868284172,
+    "nodeUptime": 9.252663517,
     "cpuUsage": {
-      "user": 1856814,
-      "system": 401151
+      "user": 2308074,
+      "system": 540640
     }
   }
 }
