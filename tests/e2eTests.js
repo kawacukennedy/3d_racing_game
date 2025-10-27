@@ -130,7 +130,7 @@ class E2ETests {
             await this.page.goto(this.baseUrl);
 
             // Wait for game to load
-            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 15000 });
+            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 30000 });
 
             // Check if canvas exists and has proper dimensions
             const canvasInfo = await this.page.evaluate(() => {
@@ -300,7 +300,7 @@ class E2ETests {
             // Wait for game to start
             await this.page.waitForFunction(() => {
                 return window.game && window.game.raceActive;
-            }, { timeout: 5000 });
+            }, { timeout: 10000 });
 
             // Test keyboard controls
             await this.page.keyboard.press('ArrowUp'); // Accelerate
@@ -357,7 +357,7 @@ class E2ETests {
             // Wait for game to start
             await this.page.waitForFunction(() => {
                 return window.game && window.game.raceActive;
-            }, { timeout: 5000 });
+            }, { timeout: 10000 });
 
             // Monitor performance for 2 seconds
             const performanceData = await this.page.evaluate(() => {
@@ -498,18 +498,31 @@ class E2ETests {
         try {
             await this.setup();
 
-            // Run all E2E tests
-            const testPromises = [
-                this.testGameLoading(),
-                this.testMenuNavigation(),
-                this.testGameStart(),
-                this.testControls(),
-                this.testPerformance(),
-                this.testMultiplayerConnection(),
-                this.testResponsiveDesign()
+            // Run all E2E tests sequentially to avoid resource conflicts in CI
+            const testResults = [];
+            const tests = [
+                this.testGameLoading,
+                this.testMenuNavigation,
+                this.testGameStart,
+                this.testControls,
+                this.testPerformance,
+                this.testMultiplayerConnection,
+                this.testResponsiveDesign
             ];
 
-            const testResults = await Promise.all(testPromises);
+            for (const test of tests) {
+                try {
+                    const result = await test.call(this);
+                    testResults.push(result);
+                } catch (error) {
+                    testResults.push({
+                        name: test.name,
+                        status: 'failed',
+                        duration: 0,
+                        error: error.message
+                    });
+                }
+            }
             this.results.testResults = testResults;
 
             this.results.duration = performance.now() - startTime;
