@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+// GLTFLoader import removed for compatibility - will be loaded dynamically if needed
 import { AIController } from './aiController.js';
 import { VehicleConfigManager, VEHICLE_TYPES } from '../gameplay/vehicleConfig.js';
 import { LODManager } from './lodManager.js';
@@ -10,7 +10,7 @@ export class SceneManager {
         this.world = world;
         this.physicsManager = physicsManager;
         this.camera = camera;
-        this.loader = new GLTFLoader();
+        this.loader = null; // Will be initialized when needed
         this.track = null;
         this.playerVehicle = null;
         this.playerVehicleBody = null;

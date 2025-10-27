@@ -311,6 +311,7 @@ class NodeTestRunner {
                         this.bodies = [];
                         this.gravity = new CANNON.Vec3();
                         this.addBody = (body) => this.bodies.push(body);
+                        this.fixedStep = () => {}; // Mock physics step
                     }
                 },
                 Vec3: class Vec3 {
@@ -318,21 +319,78 @@ class NodeTestRunner {
                         this.x = x; this.y = y; this.z = z;
                     }
                     set(x, y, z) { this.x = x; this.y = y; this.z = z; }
+                    copy(v) { this.x = v.x; this.y = v.y; this.z = v.z; }
+                    clone() { return new CANNON.Vec3(this.x, this.y, this.z); }
+                    applyQuaternion() { return this; }
+                    normalize() { return this; }
+                    dot() { return 0; }
+                    crossVectors() { return new CANNON.Vec3(); }
                 },
                 Body: class Body {
                     constructor(options = {}) {
                         this.position = new CANNON.Vec3();
                         this.mass = options.mass || 0;
                         this.type = options.type || CANNON.Body.DYNAMIC;
+                        this.velocity = new CANNON.Vec3();
+                        this.quaternion = { x: 0, y: 0, z: 0, w: 1 };
+                        this.collisionFilterGroup = 1;
                     }
+                    addShape() {}
                 },
                 Box: class Box {
                     constructor(halfExtents) {
                         this.halfExtents = halfExtents;
                     }
                 },
+                Cylinder: class Cylinder {
+                    constructor(radiusTop, radiusBottom, height, numSegments) {
+                        this.radiusTop = radiusTop;
+                        this.radiusBottom = radiusBottom;
+                        this.height = height;
+                        this.numSegments = numSegments;
+                    }
+                },
+                Material: class Material {
+                    constructor(options = {}) {
+                        this.friction = options.friction || 0.3;
+                        this.restitution = options.restitution || 0.1;
+                    }
+                },
+                RaycastVehicle: class RaycastVehicle {
+                    constructor(options = {}) {
+                        this.chassisBody = options.chassisBody;
+                        this.wheelInfos = [];
+                        this.world = null;
+                    }
+                    addWheel(options) {
+                        const wheelInfo = {
+                            index: this.wheelInfos.length,
+                            radius: options.radius || 0.35,
+                            worldTransform: {
+                                position: new CANNON.Vec3(),
+                                quaternion: { x: 0, y: 0, z: 0, w: 1 }
+                            },
+                            isInContact: false
+                        };
+                        this.wheelInfos.push(wheelInfo);
+                        return wheelInfo;
+                    }
+                    addToWorld(world) {
+                        this.world = world;
+                    }
+                    updateWheelTransform(index) {
+                        // Mock wheel transform update
+                        if (this.wheelInfos[index]) {
+                            this.wheelInfos[index].worldTransform.position.set(0, 0, 0);
+                        }
+                    }
+                    applyEngineForce() {}
+                    setBrake() {}
+                    setSteeringValue() {}
+                },
                 STATIC: 'static',
-                DYNAMIC: 'dynamic'
+                DYNAMIC: 'dynamic',
+                KINEMATIC: 'kinematic'
             };
 
             const { SceneManager } = await this.importModule('src/engine/sceneManager.js');
@@ -382,42 +440,34 @@ class NodeTestRunner {
                 }
             };
 
-            global.CANNON = global.CANNON || {
-                World: class World {
-                    constructor() {
-                        this.bodies = [];
-                        this.gravity = new CANNON.Vec3();
-                        this.addBody = (body) => this.bodies.push(body);
-                    }
-                },
-                Vec3: class Vec3 {
-                    constructor(x = 0, y = 0, z = 0) {
-                        this.x = x; this.y = y; this.z = z;
-                    }
-                    set(x, y, z) { this.x = x; this.y = y; this.z = z; }
-                },
-                Body: class Body {
-                    constructor(options = {}) {
-                        this.position = new CANNON.Vec3();
-                        this.mass = options.mass || 0;
-                        this.type = options.type || CANNON.Body.DYNAMIC;
-                    }
-                },
-                Box: class Box {
-                    constructor(halfExtents) {
-                        this.halfExtents = halfExtents;
-                    }
-                },
-                STATIC: 'static',
-                DYNAMIC: 'dynamic'
-            };
+            // Use the global CANNON mock set above
 
             const { SceneManager } = await this.importModule('src/engine/sceneManager.js');
             const scene = new THREE.Scene();
             const physicsWorld = new CANNON.World();
             physicsWorld.gravity.set(0, -9.82, 0);
 
-            const sceneManager = new SceneManager(scene, physicsWorld, { world: physicsWorld });
+            // Create a mock physics manager with createVehicle method
+            const mockPhysicsManager = {
+                world: physicsWorld,
+                createVehicle: (config) => {
+                    // Return a mock vehicle with the expected structure
+                    return {
+                        chassisBody: {
+                            position: new CANNON.Vec3(0, 2, 0),
+                            quaternion: { x: 0, y: 0, z: 0, w: 1 }
+                        },
+                        wheelInfos: [
+                            { index: 0, wheelBody: { position: new CANNON.Vec3(), quaternion: { x: 0, y: 0, z: 0, w: 1 } } },
+                            { index: 1, wheelBody: { position: new CANNON.Vec3(), quaternion: { x: 0, y: 0, z: 0, w: 1 } } },
+                            { index: 2, wheelBody: { position: new CANNON.Vec3(), quaternion: { x: 0, y: 0, z: 0, w: 1 } } },
+                            { index: 3, wheelBody: { position: new CANNON.Vec3(), quaternion: { x: 0, y: 0, z: 0, w: 1 } } }
+                        ]
+                    };
+                }
+            };
+
+            const sceneManager = new SceneManager(scene, physicsWorld, mockPhysicsManager);
             sceneManager.createPlayerVehicle();
 
             if (!sceneManager.playerVehicle) throw new Error('Player vehicle mesh not created');
