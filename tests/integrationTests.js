@@ -61,13 +61,11 @@ class IntegrationTests {
     }
 
     async importModule(modulePath) {
-        const fullPath = new URL(`../${modulePath}`, import.meta.url).pathname;
-        try {
-            return await import(fullPath);
-        } catch (error) {
-            // Try with .js extension
-            return await import(fullPath + '.js');
+        let fullPath = new URL(`../${modulePath}`, import.meta.url).pathname;
+        if (!fullPath.endsWith('.js')) {
+            fullPath += '.js';
         }
+        return await import(fullPath);
     }
 
     async addPhysicsRenderingIntegrationTests() {

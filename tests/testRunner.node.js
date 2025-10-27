@@ -160,13 +160,11 @@ class NodeTestRunner {
 
     // Dynamic import with path resolution
     async importModule(modulePath) {
-        const fullPath = path.resolve(__dirname, '..', modulePath);
-        try {
-            return await import(fullPath);
-        } catch (error) {
-            // Try with .js extension
-            return await import(fullPath + '.js');
+        let fullPath = path.resolve(__dirname, '..', modulePath);
+        if (!fullPath.endsWith('.js')) {
+            fullPath += '.js';
         }
+        return await import(fullPath);
     }
 
     // Test Execution
