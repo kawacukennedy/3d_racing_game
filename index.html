@@ -189,6 +189,61 @@
         .store-item.epic { border-left: 4px solid #a855f7; }
         .store-item.legendary { border-left: 4px solid #fbbf24; }
 
+        /* Championship Menu */
+        #championshipMenu {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .championship-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #666;
+        }
+
+        .championship-item.unlocked {
+            border-left-color: #4CAF50;
+        }
+
+        .championship-item.locked {
+            border-left-color: #f44336;
+            opacity: 0.7;
+        }
+
+        .championship-item h4 {
+            margin: 0 0 5px 0;
+            color: #4CAF50;
+        }
+
+        .championship-item.locked h4 {
+            color: #f44336;
+        }
+
+        .start-championship {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .start-championship:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
         .color-grid {
             display: grid;
             grid-template-columns: repeat(5, 25px);
@@ -310,6 +365,7 @@
                 </select>
             </div>
             <button class="menu-button" id="startRace">🏁 Quick Race</button>
+            <button class="menu-button" id="championship">🏆 Championship</button>
             <button class="menu-button" id="multiplayer">🎮 Multiplayer</button>
             <button class="menu-button" id="spectator">👁️ Spectator Mode</button>
             <button class="menu-button" id="customize">🎨 Customize Vehicle</button>

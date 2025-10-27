@@ -21,6 +21,11 @@ export class VehicleController {
     }
 
     setupInput() {
+        // Skip event listeners in test environment
+        if (typeof document.addEventListener === 'undefined') {
+            return;
+        }
+
         this.keydownHandler = (event) => {
             this.keys[event.code] = true;
         };
@@ -155,6 +160,23 @@ export class VehicleController {
 
     setPhysicsVehicle(physicsVehicle) {
         this.physicsVehicle = physicsVehicle;
+    }
+
+    accelerate(force = 1.0) {
+        if (!this.physicsVehicle) return;
+        const engineForce = force * this.maxEngineForce;
+        // Apply to rear wheels
+        this.physicsVehicle.applyEngineForce(engineForce, 2);
+        this.physicsVehicle.applyEngineForce(engineForce, 3);
+    }
+
+    brake(force = 1.0) {
+        if (!this.physicsVehicle) return;
+        const brakeForce = force * this.maxBrakeForce;
+        // Apply to all wheels
+        for (let i = 0; i < this.physicsVehicle.wheelInfos.length; i++) {
+            this.physicsVehicle.setBrake(brakeForce, i);
+        }
     }
 
     // Accessibility methods

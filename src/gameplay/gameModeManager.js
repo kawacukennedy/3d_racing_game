@@ -401,12 +401,67 @@ export class GameModeManager {
 
     getModeStatus() {
         return {
-            mode: this.currentMode,
-            config: this.modeConfig,
-            state: this.modeState,
-            timeRemaining: this.modeConfig.timeLimit ?
-                Math.max(0, this.modeConfig.timeLimit - this.modeTimer) : null
+            currentMode: this.currentMode,
+            modeConfig: this.modeConfig,
+            modeState: this.modeState,
+            modeTimer: this.modeTimer,
+            isActive: this.modeTimer > 0,
+            progress: this.getModeProgress()
         };
+    }
+
+    getCurrentGameState() {
+        return {
+            currentMode: this.currentMode,
+            modeState: this.modeState,
+            modeTimer: this.modeTimer,
+            lapCount: this.lapCount,
+            currentCheckpoint: this.currentCheckpoint,
+            players: this.modeState.players || [],
+            isActive: this.modeTimer > 0,
+            progress: this.getModeProgress()
+        };
+    }
+
+    getModeProgress() {
+        switch (this.currentMode) {
+            case 'standard':
+            case 'time_trial':
+                return {
+                    type: 'lap_based',
+                    current: this.lapCount,
+                    total: this.totalLaps,
+                    percentage: this.totalLaps > 0 ? (this.lapCount / this.totalLaps) * 100 : 0
+                };
+            case 'drift':
+                return {
+                    type: 'score_based',
+                    current: this.modeState.driftScore || 0,
+                    target: 10000, // Example target
+                    percentage: Math.min(((this.modeState.driftScore || 0) / 10000) * 100, 100)
+                };
+            case 'elimination':
+                return {
+                    type: 'survival',
+                    remainingPlayers: this.modeState.players ? this.modeState.players.filter(p => p.status === 'active').length : 0,
+                    totalPlayers: this.modeState.players ? this.modeState.players.length : 0,
+                    percentage: this.modeState.players ? (this.modeState.players.filter(p => p.status === 'active').length / this.modeState.players.length) * 100 : 0
+                };
+            case 'battle':
+                return {
+                    type: 'elimination_count',
+                    current: this.modeState.eliminations || 0,
+                    target: 5,
+                    percentage: ((this.modeState.eliminations || 0) / 5) * 100
+                };
+            default:
+                return {
+                    type: 'time_based',
+                    current: this.modeTimer,
+                    total: this.modeConfig.timeLimit || 300,
+                    percentage: this.modeConfig.timeLimit ? (this.modeTimer / this.modeConfig.timeLimit) * 100 : 0
+                };
+        }
     }
 
     isModeComplete() {
@@ -524,6 +579,11 @@ export class GameModeManager {
         this.modeState.lapTimes.push(lapTime);
 
         console.log(`Lap ${this.lapCount}/${this.totalLaps} completed in ${lapTime.toFixed(2)}ms`);
+
+        // Notify ghost system of lap completion
+        if (this.game && this.game.ghostSystem) {
+            this.game.ghostSystem.onLapCompleted(lapTime);
+        }
 
         // Check race completion
         if (this.lapCount >= this.totalLaps) {
@@ -694,11 +754,39 @@ export class GameModeManager {
         };
     }
 
+    startRace(trackData = null, players = null) {
+        console.log(`Starting ${this.gameModes[this.currentMode].name} race`);
+        this.modeTimer = 0;
+        this.lapCount = 0;
+        this.currentCheckpoint = 0;
+        this.modeState = {
+            lapTimes: [],
+            driftPoints: 0,
+            comboMultiplier: 1,
+            comboTimer: 0,
+            eliminations: 0,
+            itemsCollected: [],
+            powerUps: [],
+            players: players || ['local_player'],
+            trackData: trackData
+        };
+
+        // Initialize mode-specific features
+        this.initializeModeSpecificFeatures();
+
+        return true;
+    }
+
     endRace() {
-        const finalTime = this.modeState.lapTimes.reduce((sum, time) => sum + time, 0);
-        const bestLap = this.modeState.lapTimes.length > 0 ? Math.min(...this.modeState.lapTimes) : 0;
+        const finalTime = this.calculateLapTime();
+        const bestLap = Math.min(...this.modeState.lapTimes);
 
         console.log(`Race completed! Total time: ${finalTime.toFixed(2)}ms, Best lap: ${bestLap.toFixed(2)}ms`);
+
+        // Stop replay recording
+        if (this.game.replaySystem) {
+            this.game.replaySystem.stopRecording();
+        }
 
         // Trigger race end event
         if (this.game.uiManager) {

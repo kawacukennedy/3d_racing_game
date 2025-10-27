@@ -5,11 +5,12 @@ import { VehicleConfigManager, VEHICLE_TYPES } from '../gameplay/vehicleConfig.j
 import { LODManager } from './lodManager.js';
 
 export class SceneManager {
-    constructor(scene, world, physicsManager, camera) {
+    constructor(scene, world, physicsManager, camera, game = null) {
         this.scene = scene;
         this.world = world;
         this.physicsManager = physicsManager;
         this.camera = camera;
+        this.game = game;
         this.loader = null; // Will be initialized when needed
         this.track = null;
         this.playerVehicle = null;
@@ -219,6 +220,11 @@ export class SceneManager {
                 controller: aiController
             });
             this.aiControllers.push(aiController);
+
+            // Register with AI Director if available
+            if (this.game && this.game.aiDirector) {
+                this.game.aiDirector.addAIController(aiController);
+            }
         }
     }
 

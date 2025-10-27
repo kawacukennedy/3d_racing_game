@@ -207,6 +207,13 @@ export class TournamentManager {
         return { success: true };
     }
 
+    advanceRound(tournamentId) {
+        const tournament = this.activeTournaments.find(t => t.id === tournamentId);
+        if (!tournament) return { success: false, reason: 'Tournament not found' };
+
+        return this.advanceToNextRound(tournament);
+    }
+
     advanceToNextRound(tournament) {
         const currentRound = tournament.brackets[tournament.currentRound - 1];
         const winners = currentRound.matches
@@ -566,6 +573,34 @@ export class TournamentManager {
     }
 
     // Tournament Analytics
+
+    getTournamentState(tournamentId) {
+        const tournament = this.activeTournaments.find(t => t.id === tournamentId);
+        if (!tournament) return null;
+
+        const totalRounds = Math.ceil(Math.log2(tournament.maxPlayers));
+        const currentRound = tournament.brackets[tournament.currentRound - 1] || {};
+        const currentRoundMatches = currentRound.matches || [];
+        const completedMatches = currentRoundMatches.filter(match => match.winner).length;
+        const totalMatches = currentRoundMatches.length;
+
+        return {
+            id: tournament.id,
+            name: tournament.name,
+            type: tournament.type,
+            status: tournament.status,
+            currentRound: tournament.currentRound,
+            totalRounds: totalRounds,
+            players: tournament.players.length,
+            maxPlayers: tournament.maxPlayers,
+            matchesCompleted: completedMatches,
+            totalMatches: totalMatches,
+            roundProgress: totalMatches > 0 ? completedMatches / totalMatches : 0,
+            winner: tournament.winner || null,
+            prizePool: tournament.prizePool,
+            entryFee: tournament.entryFee
+        };
+    }
 
     getTournamentStats(tournamentId) {
         const tournament = this.completedTournaments.find(t => t.id === tournamentId);

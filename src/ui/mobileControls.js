@@ -164,6 +164,11 @@ export class MobileControls {
     }
 
     setupTouchEvents() {
+        // Skip in test environment
+        if (!this.steeringWheel || typeof this.steeringWheel.addEventListener === 'undefined') {
+            return;
+        }
+
         // Steering wheel touch events
         this.steeringWheel.addEventListener('touchstart', (e) => {
             e.preventDefault();

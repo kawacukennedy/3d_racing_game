@@ -1,62 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="VelocityRush3D" tests="22" failures="13" time="5.932">
-    <testcase name="Physics Engine Initialization" classname="physics" time="0.334">
+  <testsuite name="VelocityRush3D" tests="22" failures="0" time="6.011">
+    <testcase name="Physics Engine Initialization" classname="physics" time="0.214">
     </testcase>
-    <testcase name="Vehicle Physics Creation" classname="physics" time="0.008">
+    <testcase name="Vehicle Physics Creation" classname="physics" time="0.019">
     </testcase>
-    <testcase name="Physics Simulation" classname="physics" time="0.035">
-      <failure message="Cannot set properties of undefined (setting 'isInContact')">Cannot set properties of undefined (setting 'isInContact')</failure>
+    <testcase name="Physics Simulation" classname="physics" time="0.130">
     </testcase>
-    <testcase name="Three.js Scene Creation" classname="rendering" time="0.147">
-      <failure message="Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/testRunner.node.js">Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/testRunner.node.js</failure>
+    <testcase name="Three.js Scene Creation" classname="rendering" time="0.169">
     </testcase>
-    <testcase name="Vehicle Mesh Creation" classname="rendering" time="0.001">
-      <failure message="Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/testRunner.node.js">Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/testRunner.node.js</failure>
+    <testcase name="Vehicle Mesh Creation" classname="rendering" time="0.042">
     </testcase>
-    <testcase name="Vehicle Configuration Loading" classname="gameplay" time="0.002">
+    <testcase name="Vehicle Configuration Loading" classname="gameplay" time="0.000">
     </testcase>
     <testcase name="Customization System" classname="gameplay" time="0.005">
     </testcase>
-    <testcase name="Network Manager Initialization" classname="network" time="0.313">
+    <testcase name="Network Manager Initialization" classname="network" time="0.345">
     </testcase>
     <testcase name="Tournament System" classname="network" time="0.004">
     </testcase>
     <testcase name="Social Manager Initialization" classname="social" time="0.004">
     </testcase>
-    <testcase name="Leaderboard System" classname="social" time="0.033">
+    <testcase name="Leaderboard System" classname="social" time="0.005">
     </testcase>
-    <testcase name="Basic Rendering Performance" classname="performance" time="5.002">
-      <failure message="Performance test failed: 54.4 FPS < 55 FPS target">Performance test failed: 54.4 FPS < 55 FPS target</failure>
+    <testcase name="Basic Rendering Performance" classname="performance" time="5.004">
     </testcase>
     <testcase name="Memory Usage Check" classname="performance" time="0.000">
     </testcase>
-    <testcase name="Physics-Rendering Vehicle Synchronization" classname="integration" time="0.001">
-      <failure message="Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js">Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js</failure>
+    <testcase name="Physics-Rendering Vehicle Synchronization" classname="integration" time="0.009">
     </testcase>
-    <testcase name="Physics-Rendering Wheel Synchronization" classname="integration" time="0.000">
-      <failure message="Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js">Cannot find module '/Volumes/RCA/game/src/engine/sceneManager.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js</failure>
+    <testcase name="Physics-Rendering Wheel Synchronization" classname="integration" time="0.018">
     </testcase>
-    <testcase name="Network-Gameplay Race Synchronization" classname="integration" time="0.019">
-      <failure message="gameModeManager.startRace is not a function">gameModeManager.startRace is not a function</failure>
+    <testcase name="Network-Gameplay Race Synchronization" classname="integration" time="0.015">
     </testcase>
-    <testcase name="Tournament-Network Integration" classname="integration" time="0.001">
-      <failure message="tournamentManager.advanceRound is not a function">tournamentManager.advanceRound is not a function</failure>
+    <testcase name="Tournament-Network Integration" classname="integration" time="0.003">
     </testcase>
-    <testcase name="UI-Gameplay HUD Updates" classname="integration" time="0.002">
-      <failure message="gameModeManager.startRace is not a function">gameModeManager.startRace is not a function</failure>
+    <testcase name="UI-Gameplay HUD Updates" classname="integration" time="0.003">
     </testcase>
-    <testcase name="UI-Gameplay Menu Navigation" classname="integration" time="0.000">
-      <failure message="uiManager.startGame is not a function">uiManager.startGame is not a function</failure>
+    <testcase name="UI-Gameplay Menu Navigation" classname="integration" time="0.001">
     </testcase>
-    <testcase name="Audio-Gameplay Engine Sounds" classname="integration" time="0.012">
-      <failure message="vehicleController.accelerate is not a function">vehicleController.accelerate is not a function</failure>
+    <testcase name="Audio-Gameplay Engine Sounds" classname="integration" time="0.020">
     </testcase>
-    <testcase name="Full Game Initialization" classname="integration" time="0.005">
-      <failure message="Cannot find module '/Volumes/RCA/game/src/main.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js">Cannot find module '/Volumes/RCA/game/src/main.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js</failure>
+    <testcase name="Full Game Initialization" classname="integration" time="0.000">
     </testcase>
-    <testcase name="Full Game Loop Execution" classname="integration" time="0.001">
-      <failure message="Cannot find module '/Volumes/RCA/game/src/main.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js">Cannot find module '/Volumes/RCA/game/src/main.js.js' imported from /Volumes/RCA/game/tests/integrationTests.js</failure>
+    <testcase name="Full Game Loop Execution" classname="integration" time="0.000">
     </testcase>
   </testsuite>
 </testsuites>
