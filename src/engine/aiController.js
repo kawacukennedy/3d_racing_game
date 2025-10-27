@@ -183,12 +183,22 @@ export class AIController {
             }
         }
 
+        // Handle hazard avoidance
+        if (this.behaviorState === 'hazard_avoidance') {
+            // Check if hazard is no longer relevant
+            if (!this.hazardToAvoid || Math.random() < 0.1) { // 10% chance per update to resume normal racing
+                this.behaviorState = 'racing';
+                this.hazardToAvoid = null;
+            }
+        }
+
         // Reset to racing if no special behavior applies
         if (!hasNearbyOpponents || Math.random() < 0.1) {
             this.behaviorState = 'racing';
             this.draftingTarget = null;
             this.blockingTarget = null;
             this.powerUpTarget = null;
+            this.hazardToAvoid = null;
         }
     }
 
@@ -229,6 +239,22 @@ export class AIController {
                 // Target the power-up position
                 if (this.powerUpTarget) {
                     return this.powerUpTarget;
+                }
+                break;
+            case 'hazard_avoidance':
+                // Use modified waypoint to avoid hazard
+                if (this.hazardToAvoid) {
+                    let targetWaypoint = this.getNextWaypoint(vehiclePosition);
+                    // If waypoint is too close to hazard, find alternative
+                    if (targetWaypoint && this.hazardToAvoid.position.distanceTo(targetWaypoint) < this.hazardToAvoid.radius + 5) {
+                        const safeWaypoints = this.waypoints.filter(w =>
+                            this.hazardToAvoid.position.distanceTo(w) > this.hazardToAvoid.radius + 3
+                        );
+                        if (safeWaypoints.length > 0) {
+                            return safeWaypoints[0];
+                        }
+                    }
+                    return targetWaypoint;
                 }
                 break;
             case 'recovering':
@@ -539,6 +565,9 @@ export class AIController {
             case 'powerup_hunt':
                 this.executePowerUpHuntBehavior();
                 break;
+            case 'hazard_avoidance':
+                this.executeHazardAvoidanceBehavior();
+                break;
         }
     }
 
@@ -599,6 +628,33 @@ export class AIController {
         this.applyControls(steerValue, throttle, brakeForce);
     }
 
+    executeHazardAvoidanceBehavior() {
+        // Modify racing behavior to avoid hazard
+        if (!this.hazardToAvoid) return;
+
+        // Get next waypoint but adjust to avoid hazard
+        let targetWaypoint = this.getNextWaypoint(this.vehicle.position);
+
+        // If waypoint is too close to hazard, find an alternative path
+        if (targetWaypoint && this.hazardToAvoid.position.distanceTo(targetWaypoint) < this.hazardToAvoid.radius + 5) {
+            // Find a safer waypoint
+            const safeWaypoints = this.waypoints.filter(w =>
+                this.hazardToAvoid.position.distanceTo(w) > this.hazardToAvoid.radius + 3
+            );
+            if (safeWaypoints.length > 0) {
+                targetWaypoint = safeWaypoints[0]; // Use first safe waypoint
+            }
+        }
+
+        if (targetWaypoint) {
+            const steerValue = this.calculateSteering(this.vehicle.position, this.vehicle.rotation, targetWaypoint);
+            const throttle = this.calculateThrottle(this.vehicle.position, targetWaypoint);
+            const brakeForce = this.calculateBraking(this.vehicle.position, targetWaypoint);
+
+            this.applyControls(steerValue, throttle, brakeForce);
+        }
+    }
+
     applyControls(steerValue, throttle, brakeForce) {
         if (!this.physicsVehicle) return;
 
@@ -645,6 +701,12 @@ export class AIController {
         // Set temporary target to power-up position
         this.powerUpTarget = position;
         this.behaviorState = 'powerup_hunt';
+    }
+
+    avoidHazard(position, radius) {
+        // Modify waypoints to avoid hazard area
+        this.hazardToAvoid = { position, radius };
+        this.behaviorState = 'hazard_avoidance';
     }
 
     getStatus() {
