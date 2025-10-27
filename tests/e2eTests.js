@@ -183,7 +183,7 @@ class E2ETests {
     async testMenuNavigation() {
         return await this.runTest('Menu Navigation Flow', async () => {
             await this.page.goto(this.baseUrl);
-            await this.page.waitForSelector('#gameCanvas');
+            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 30000 });
 
             // Check if main menu loads
             const menuVisible = await this.page.evaluate(() => {
@@ -235,7 +235,7 @@ class E2ETests {
     async testGameStart() {
         return await this.runTest('Game Start and Basic Gameplay', async () => {
             await this.page.goto(this.baseUrl);
-            await this.page.waitForSelector('#gameCanvas');
+            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 30000 });
 
             // Start a quick race
             const gameStarted = await this.page.evaluate(() => {
@@ -407,7 +407,7 @@ class E2ETests {
     async testMultiplayerConnection() {
         return await this.runTest('Multiplayer Connection', async () => {
             await this.page.goto(this.baseUrl);
-            await this.page.waitForSelector('#gameCanvas');
+            await this.page.waitForFunction(() => window.game && document.getElementById('gameCanvas'), { timeout: 30000 });
 
             // Try to connect to multiplayer
             const connectionResult = await this.page.evaluate(() => {
@@ -430,14 +430,6 @@ class E2ETests {
                     };
                 }
             });
-                        }).catch(() => {
-                            resolve({ connected: false, error: 'Connection failed' });
-                        });
-                    } else {
-                        resolve({ connected: false, error: 'Network manager not available' });
-                    }
-
-                    // Timeout after 5 seconds
                     setTimeout(() => {
                         resolve({ connected: false, error: 'Connection timeout' });
                     }, 5000);
@@ -473,7 +465,7 @@ class E2ETests {
                 await page.waitForSelector('#gameCanvas', { timeout: 10000 });
 
                 const layoutCheck = await page.evaluate(() => {
-                    const canvas = document.getElementById('game-canvas');
+                    const canvas = document.getElementById('gameCanvas');
                     const body = document.body;
 
                     return {
