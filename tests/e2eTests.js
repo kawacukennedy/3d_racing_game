@@ -51,19 +51,25 @@ class E2ETests {
         // Wait for server to start
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // Check if server is responding
+        // Check if server is responding and update baseUrl if needed
         const maxRetries = 20;
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                const response = await fetch(this.baseUrl);
-                if (response.ok) {
-                    console.log('Server is responding');
-                    break;
+        let serverFound = false;
+        for (let port = 3000; port <= 3010 && !serverFound; port++) {
+            const testUrl = `http://localhost:${port}`;
+            for (let i = 0; i < maxRetries && !serverFound; i++) {
+                try {
+                    const response = await fetch(testUrl);
+                    if (response.ok) {
+                        this.baseUrl = testUrl;
+                        console.log(`Server is responding on ${this.baseUrl}`);
+                        serverFound = true;
+                        break;
+                    }
+                } catch (error) {
+                    // Try next port or retry
                 }
-            } catch (error) {
-                console.log(`Server not ready yet, retry ${i + 1}/${maxRetries}`);
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
-            await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
 
@@ -429,11 +435,6 @@ class E2ETests {
                         connectionTime: 0
                     };
                 }
-            });
-                    setTimeout(() => {
-                        resolve({ connected: false, error: 'Connection timeout' });
-                    }, 5000);
-                });
             });
 
             // Note: This test may fail if server is not running, which is expected in CI
