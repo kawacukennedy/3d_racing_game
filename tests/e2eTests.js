@@ -507,7 +507,7 @@ class E2ETests {
             for (const viewport of viewports) {
                 const page = await this.browser.newPage();
                 await page.setViewport({ width: viewport.width, height: viewport.height });
-                await page.goto(this.baseUrl, { waitUntil: 'networkidle0' });
+                await page.goto(this.baseUrl, { waitUntil: 'domcontentloaded' });
 
                 // Wait for game to initialize properly
                 await page.waitForFunction(() => {
