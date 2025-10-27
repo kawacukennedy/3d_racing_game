@@ -29,9 +29,17 @@ class E2ETests {
 
     async setup() {
         // Launch browser
-        this.browser = await puppeteer.launch({
+        const isCI = process.env.CI === 'true';
+        const launchOptions = {
             headless: 'new'
-        });
+        };
+
+        // Add sandbox args for CI environments
+        if (isCI) {
+            launchOptions.args = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'];
+        }
+
+        this.browser = await puppeteer.launch(launchOptions);
 
         // Start development server
         const { spawn } = await import('child_process');
