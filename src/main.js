@@ -26,8 +26,9 @@ import { TournamentManager } from './multiplayer/tournamentManager.js';
 import { SocialManager } from './multiplayer/socialManager.js';
 import { ProgressionManager } from './gameplay/progressionManager.js';
 import { GameModeManager } from './gameplay/gameModeManager.js';
+import { ChampionshipManager } from './gameplay/championshipManager.js';
+import { TrackElementsManager } from './environment/trackElementsManager.js';
 import { MobileControls } from './ui/mobileControls.js';
-import { GameModeManager } from './gameplay/gameModeManager.js';
 import { AccessibilityManager } from './ui/accessibilityManager.js';
 import { VoiceChatManager } from './audio/voiceChatManager.js';
 import { StreamingManager } from './utils/streamingManager.js';
@@ -137,6 +138,8 @@ class Game {
         this.analyticsManager = new AnalyticsManager();
         this.progressionManager = new ProgressionManager(this);
         this.gameModeManager = new GameModeManager(this);
+        this.championshipManager = new ChampionshipManager(this);
+        this.trackElementsManager = new TrackElementsManager(this.scene, this.physicsManager.world);
         this.networkManager = new NetworkManager(this);
         this.leaderboardManager = new LeaderboardManager();
         this.storeManager = new StoreManager(this);
@@ -507,6 +510,9 @@ class Game {
         let currentPosition = { x: 0, y: 0, z: 0 };
         let currentAngle = 0;
 
+        // Add track elements
+        this.addTrackElements(trackSegments);
+
         trackSegments.forEach((segment, index) => {
             if (segment.type === 'straight') {
                 // Create straight segment
@@ -632,6 +638,20 @@ class Game {
         console.log('✅ Race simulation started');
     }
 
+    addTrackElements(trackSegments) {
+        // Add boost pads and hazards at strategic locations
+        const elements = [
+            { type: 'boost_pad', position: new THREE.Vector3(20, 0.05, 0), rotation: new THREE.Euler(0, 0, 0) },
+            { type: 'speed_boost', position: new THREE.Vector3(60, 0.05, -8), rotation: new THREE.Euler(0, 0, 0) },
+            { type: 'hazard', position: new THREE.Vector3(40, 0.05, 5), rotation: new THREE.Euler(0, 0, 0) },
+            { type: 'oil_spill', position: new THREE.Vector3(80, 0.05, 3), rotation: new THREE.Euler(-Math.PI / 2, 0, 0) },
+            { type: 'jump_ramp', position: new THREE.Vector3(100, 0.5, 0), rotation: new THREE.Euler(0, 0, 0) }
+        ];
+
+        this.trackElementsManager.placeElementsOnTrack({}, elements);
+        console.log(`Added ${elements.length} track elements`);
+    }
+
     setupRaceControls() {
         console.log('🎮 Setting up race controls...');
 
@@ -746,6 +766,11 @@ class Game {
             this.gameModeManager.checkPitLaneEntry(this.playerVehicle.position);
         } else {
             this.gameModeManager.checkPitLaneExit(this.playerVehicle.position);
+        }
+
+        // Check track element collisions
+        if (this.trackElementsManager) {
+            this.trackElementsManager.checkCollisions(this.physicsManager.vehicle);
         }
 
         // Handle pit stop input (P key for pit stop)

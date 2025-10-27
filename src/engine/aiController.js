@@ -430,22 +430,7 @@ export class AIController {
         console.log(`AI difficulty set to ${difficulty} (skill: ${this.skillLevel})`);
     }
 
-    // Enhanced AI Racing Behaviors
-    update(deltaTime) {
-        if (!this.vehicle || !this.physicsVehicle) return;
 
-        this.reactionTime -= deltaTime;
-        if (this.reactionTime > 0) return; // Wait for reaction time
-
-        // Reset reaction time
-        this.reactionTime = this.getReactionTime();
-
-        // Update behavior state
-        this.updateBehaviorState();
-
-        // Execute current behavior
-        this.executeBehavior();
-    }
 
     getReactionTime() {
         // Base reaction time modified by skill level and personality
