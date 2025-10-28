@@ -46,29 +46,95 @@ export class PhysicsManager {
     }
 
     createVehicle(config = null) {
-        // Default configuration
+        // Default configuration with detailed physics parameters
         const defaultConfig = {
-            mass: 800,
-            geometry: { width: 1.8, height: 1.0, length: 4.0 },
+            mass: 1200,
+            geometry: { width: 1.8, height: 1.2, length: 4.2 },
             friction: 0.3,
-            restitution: 0.1
+            restitution: 0.1,
+            // Detailed physics parameters from spec
+            inertiaTensor: null, // Will be calculated if not provided
+            gearbox: {
+                gears: [3.5, 2.2, 1.6, 1.2, 1.0, 0.8], // Gear ratios
+                finalDriveRatio: 3.5,
+                reverseRatio: -3.0
+            },
+            engineTorqueCurve: [
+                { rpm: 1000, torque: 200 },
+                { rpm: 2000, torque: 300 },
+                { rpm: 3000, torque: 350 },
+                { rpm: 4000, torque: 380 },
+                { rpm: 5000, torque: 400 },
+                { rpm: 6000, torque: 380 },
+                { rpm: 7000, torque: 300 }
+            ],
+            rpmLimits: { idle: 800, redline: 7000 },
+            tireModelParameters: {
+                anisotropicFriction: true,
+                corneringStiffness: 1500, // N/rad
+                longitudinalStiffness: 1000, // N/unit slip
+                tireTemperatureModel: {
+                    temperatureIncreasePerSlip: 0.1,
+                    optimallyGrippyRange: { min: 80, max: 100 }
+                }
+            },
+            suspensionParameters: {
+                restLength: 0.3,
+                stiffnessNperM: 30000,
+                damping: 2000,
+                antiRollBar: 5000
+            },
+            aerodynamics: {
+                dragCoefficient: 0.3,
+                frontalArea: 2.2,
+                downforceCoefficient: 0.8,
+                liftAtSpeedCurve: [
+                    { speed: 0, lift: 0 },
+                    { speed: 50, lift: -100 },
+                    { speed: 100, lift: -300 },
+                    { speed: 150, lift: -600 }
+                ]
+            }
         };
 
         const vehicleConfig = config ? { ...defaultConfig, ...config } : defaultConfig;
 
-        // Vehicle body
+        // Vehicle body with inertia tensor
         const chassisShape = new CANNON.Box(new CANNON.Vec3(
             vehicleConfig.geometry.width / 2,
             vehicleConfig.geometry.height / 2,
             vehicleConfig.geometry.length / 2
         ));
-        const chassisBody = new CANNON.Body({ mass: vehicleConfig.mass });
+
+        // Calculate inertia tensor if not provided
+        let inertiaTensor = vehicleConfig.inertiaTensor;
+        if (!inertiaTensor) {
+            // Approximate inertia tensor based on mass and dimensions
+            const mass = vehicleConfig.mass;
+            const w = vehicleConfig.geometry.width;
+            const h = vehicleConfig.geometry.height;
+            const l = vehicleConfig.geometry.length;
+            inertiaTensor = new CANNON.Vec3(
+                (mass / 12) * (h*h + l*l), // Ixx
+                (mass / 12) * (w*w + l*l), // Iyy
+                (mass / 12) * (w*w + h*h)  // Izz
+            );
+        }
+
+        const chassisBody = new CANNON.Body({
+            mass: vehicleConfig.mass,
+            material: new CANNON.Material({
+                friction: vehicleConfig.friction,
+                restitution: vehicleConfig.restitution
+            })
+        });
+
         chassisBody.addShape(chassisShape);
         chassisBody.position.set(0, 2, 0);
-        chassisBody.material = new CANNON.Material({
-            friction: vehicleConfig.friction,
-            restitution: vehicleConfig.restitution
-        });
+
+        // Set custom inertia tensor
+        chassisBody.inertia.copy(inertiaTensor);
+        chassisBody.updateInertiaWorld(true);
 
         // Vehicle
         const vehicle = new CANNON.RaycastVehicle({
@@ -78,16 +144,16 @@ export class PhysicsManager {
             indexForwardAxis: 2,
         });
 
-        // Advanced wheel options with realistic tire model
+        // Advanced wheel options with detailed tire and suspension model
         const wheelOptions = {
             radius: 0.35,
             directionLocal: new CANNON.Vec3(0, -1, 0),
-            suspensionStiffness: 60,
-            suspensionRestLength: 0.3,
-            maxSuspensionForce: 10000 + (vehicleConfig.mass * 10), // Scale with vehicle mass
-            maxSuspensionTravel: 0.3,
-            dampingRelaxation: 2.3,
-            dampingCompression: 4.4,
+            suspensionStiffness: vehicleConfig.suspensionParameters.stiffnessNperM / 1000, // Convert to Cannon units
+            suspensionRestLength: vehicleConfig.suspensionParameters.restLength,
+            maxSuspensionForce: vehicleConfig.suspensionParameters.stiffnessNperM * vehicleConfig.suspensionParameters.restLength * 2,
+            maxSuspensionTravel: vehicleConfig.suspensionParameters.restLength * 0.5,
+            dampingRelaxation: vehicleConfig.suspensionParameters.damping / 100,
+            dampingCompression: vehicleConfig.suspensionParameters.damping / 50,
             axleLocal: new CANNON.Vec3(-1, 0, 0),
             chassisConnectionPointLocal: new CANNON.Vec3(
                 vehicleConfig.geometry.width / 2 - 0.2,
@@ -96,7 +162,7 @@ export class PhysicsManager {
             ),
             useCustomSlidingRotationalSpeed: true,
             customSlidingRotationalSpeed: -30,
-            frictionSlip: 2.5,
+            frictionSlip: vehicleConfig.tireModelParameters.longitudinalStiffness / 1000,
             // Advanced tire parameters
             rollInfluence: 0.01,
             isFrontWheel: false,
@@ -281,7 +347,17 @@ export class PhysicsManager {
                 rearRight: 100
             },
             engineTemp: 20, // Celsius
-            lastUpdate: Date.now()
+            lastUpdate: Date.now(),
+            // Engine and transmission state
+            currentGear: 1,
+            engineRPM: 1000,
+            clutchEngaged: true,
+            throttle: 0,
+            brake: 0,
+            // Damage and wear
+            engineHealth: 100,
+            transmissionHealth: 100,
+            suspensionHealth: 100
         });
     }
 
@@ -311,26 +387,66 @@ export class PhysicsManager {
         return state.fuel;
     }
 
-    // Tire Wear System
+    // Tire Wear System with detailed model
     updateTireWear(vehicle, deltaTime) {
         if (!this.vehicleStates.has(vehicle)) {
             this.initializeVehicleState(vehicle);
         }
 
         const state = this.vehicleStates.get(vehicle);
+        const config = this.getVehicleConfig(vehicle);
+        const tireModel = config.tireModelParameters || {
+            tireTemperatureModel: {
+                temperatureIncreasePerSlip: 0.1,
+                optimallyGrippyRange: { min: 80, max: 100 }
+            }
+        };
 
         vehicle.wheelInfos.forEach((wheel, index) => {
             const wheelName = ['frontLeft', 'frontRight', 'rearLeft', 'rearRight'][index];
 
-            // Tire wear based on slip
-            if (wheel.slipInfo > 0.5) {
-                const wearAmount = this.tireWearRate * wheel.slipInfo * deltaTime * 60;
-                state.tireCondition[wheelName] = Math.max(0, state.tireCondition[wheelName] - wearAmount);
-
-                // Reduce grip as tires wear
-                const gripMultiplier = state.tireCondition[wheelName] / 100;
-                wheel.frictionSlip = 2.0 * gripMultiplier;
+            // Initialize tire temperature if not exists
+            if (!state.tireTemperature) {
+                state.tireTemperature = {
+                    frontLeft: 20,
+                    frontRight: 20,
+                    rearLeft: 20,
+                    rearRight: 20
+                };
             }
+
+            const currentTemp = state.tireTemperature[wheelName];
+            const slip = Math.abs(wheel.slipInfo);
+
+            // Temperature increase based on slip
+            const tempIncrease = tireModel.tireTemperatureModel.temperatureIncreasePerSlip * slip * deltaTime * 60;
+            state.tireTemperature[wheelName] = Math.min(120, currentTemp + tempIncrease);
+
+            // Tire wear based on slip and temperature
+            if (slip > 0.3) {
+                const wearAmount = this.tireWearRate * slip * deltaTime * 60;
+
+                // Extra wear from high temperature
+                const tempWearMultiplier = currentTemp > 100 ? 2.0 : 1.0;
+
+                state.tireCondition[wheelName] = Math.max(0, state.tireCondition[wheelName] - wearAmount * tempWearMultiplier);
+            }
+
+            // Grip based on temperature and wear
+            const optimalRange = tireModel.tireTemperatureModel.optimallyGrippyRange;
+            let tempGripMultiplier = 1.0;
+
+            if (currentTemp < optimalRange.min) {
+                tempGripMultiplier = 0.7 + 0.3 * (currentTemp / optimalRange.min);
+            } else if (currentTemp > optimalRange.max) {
+                tempGripMultiplier = 1.0 - 0.3 * ((currentTemp - optimalRange.max) / 20);
+            }
+
+            const wearMultiplier = state.tireCondition[wheelName] / 100;
+            const totalGripMultiplier = tempGripMultiplier * wearMultiplier;
+
+            // Apply grip to friction
+            wheel.frictionSlip = config.tireModelParameters.longitudinalStiffness / 1000 * totalGripMultiplier;
         });
     }
 
@@ -362,12 +478,20 @@ export class PhysicsManager {
         const speed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
 
         if (speed > 5) { // Only apply at higher speeds
+            // Get vehicle config for aerodynamics
+            const config = this.getVehicleConfig(vehicle);
+            const aero = config.aerodynamics || {
+                dragCoefficient: 0.3,
+                frontalArea: 2.2,
+                downforceCoefficient: 0.8
+            };
+
             // Check for drafting effect
             const draftingMultiplier = this.calculateDraftingEffect(vehicle);
 
             // Advanced drag calculation
-            const dragCoefficient = 0.25 * draftingMultiplier; // Reduced drag when drafting
-            const frontalArea = 2.0; // m²
+            const dragCoefficient = aero.dragCoefficient * draftingMultiplier; // Reduced drag when drafting
+            const frontalArea = aero.frontalArea;
             const airDensity = 1.225; // kg/m³
 
             // Quadratic drag
@@ -380,14 +504,35 @@ export class PhysicsManager {
 
             vehicle.chassisBody.force.vadd(dragDirection, vehicle.chassisBody.force);
 
-            // Lift/downforce effects
-            const liftCoefficient = -0.3; // Negative for downforce
-            const liftForce = 0.5 * liftCoefficient * frontalArea * airDensity * speed * speed;
+            // Lift/downforce effects with speed curve
+            let downforce = 0;
+            if (aero.liftAtSpeedCurve) {
+                // Interpolate from curve
+                const curve = aero.liftAtSpeedCurve;
+                const speedKmh = speed * 3.6; // Convert to km/h
 
-            vehicle.chassisBody.force.y += liftForce * 0.1;
+                if (speedKmh <= curve[0].speed) {
+                    downforce = curve[0].lift;
+                } else if (speedKmh >= curve[curve.length - 1].speed) {
+                    downforce = curve[curve.length - 1].lift;
+                } else {
+                    for (let i = 0; i < curve.length - 1; i++) {
+                        if (speedKmh >= curve[i].speed && speedKmh <= curve[i + 1].speed) {
+                            const ratio = (speedKmh - curve[i].speed) / (curve[i + 1].speed - curve[i].speed);
+                            downforce = curve[i].lift + ratio * (curve[i + 1].lift - curve[i].lift);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // Fallback calculation
+                downforce = -0.5 * aero.downforceCoefficient * frontalArea * airDensity * speed * speed * 0.1;
+            }
 
-            // Side force (yaw effect)
-            const sideForce = 0.1 * speed * speed * 0.001;
+            vehicle.chassisBody.force.y += downforce * 0.01;
+
+            // Side force (yaw effect) - reduced when drafting
+            const sideForce = 0.1 * speed * speed * 0.001 * draftingMultiplier;
             const lateralVelocity = new CANNON.Vec3(velocity.x, 0, velocity.z);
             lateralVelocity.normalize();
 
@@ -494,28 +639,162 @@ export class PhysicsManager {
             throttle = 0; // No power without fuel
         }
 
-        // Engine force based on throttle
-        const maxEngineForce = 2000;
-        const engineForce = maxEngineForce * throttle;
+        // Update engine and get wheel torque
+        const wheelTorque = this.updateEngine(vehicle, throttle, deltaTime);
 
-        // Apply engine force
-        vehicle.chassisBody.applyLocalForce(
-            new CANNON.Vec3(0, 0, engineForce),
-            new CANNON.Vec3(0, 0, 0)
-        );
+        // Apply engine force to driven wheels (rear wheels for RWD)
+        const engineForce = wheelTorque / 0.35; // Convert torque to force (radius = 0.35m)
+
+        // Apply to rear wheels only (RWD configuration)
+        vehicle.applyEngineForce(engineForce, 2); // Rear left
+        vehicle.applyEngineForce(engineForce, 3); // Rear right
 
         // Brake force
         if (brake > 0) {
             const maxBrakeForce = 1500;
             const brakeForce = maxBrakeForce * brake;
-            vehicle.chassisBody.applyLocalForce(
-                new CANNON.Vec3(0, 0, -brakeForce),
-                new CANNON.Vec3(0, 0, 0)
-            );
+
+            // Apply braking to all wheels
+            for (let i = 0; i < 4; i++) {
+                vehicle.setBrake(brakeForce, i);
+            }
+        } else {
+            // Release brakes
+            for (let i = 0; i < 4; i++) {
+                vehicle.setBrake(0, i);
+            }
         }
 
-        // Consume fuel
+    // Consume fuel
         this.consumeFuel(vehicle, throttle, deltaTime);
+    }
+
+    updateEngineTemperature(vehicle, throttle, deltaTime) {
+        if (!this.vehicleStates.has(vehicle)) return;
+
+        const state = this.vehicleStates.get(vehicle);
+        const engineRPM = state.engineRPM || 1000;
+
+        // Temperature increases with RPM and throttle
+        const tempIncrease = (throttle * 0.5 + (engineRPM / 7000) * 0.3) * deltaTime * 10;
+        state.engineTemp = Math.min(120, state.engineTemp + tempIncrease);
+
+        // Cooling when engine is off
+        if (throttle < 0.1 && engineRPM < 1200) {
+            state.engineTemp = Math.max(20, state.engineTemp - deltaTime * 5);
+        }
+
+        // Engine damage from overheating
+        if (state.engineTemp > 110) {
+            state.engineHealth = Math.max(0, state.engineHealth - deltaTime * 0.1);
+        }
+    }
+
+    // Engine and Transmission Simulation
+    calculateEngineTorque(vehicle, throttle, currentRPM) {
+        if (!vehicle) return 0;
+
+        const config = this.getVehicleConfig(vehicle);
+        if (!config || !config.engineTorqueCurve) return 200 * throttle; // Fallback
+
+        // Interpolate torque from curve
+        const curve = config.engineTorqueCurve;
+        let torque = 0;
+
+        if (currentRPM <= curve[0].rpm) {
+            torque = curve[0].torque;
+        } else if (currentRPM >= curve[curve.length - 1].rpm) {
+            torque = curve[curve.length - 1].torque;
+        } else {
+            // Linear interpolation between points
+            for (let i = 0; i < curve.length - 1; i++) {
+                if (currentRPM >= curve[i].rpm && currentRPM <= curve[i + 1].rpm) {
+                    const ratio = (currentRPM - curve[i].rpm) / (curve[i + 1].rpm - curve[i].rpm);
+                    torque = curve[i].torque + ratio * (curve[i + 1].torque - curve[i].torque);
+                    break;
+                }
+            }
+        }
+
+        return torque * throttle;
+    }
+
+    updateEngine(vehicle, throttle, deltaTime) {
+        if (!this.vehicleStates.has(vehicle)) {
+            this.initializeVehicleState(vehicle);
+        }
+
+        const state = this.vehicleStates.get(vehicle);
+        const config = this.getVehicleConfig(vehicle);
+
+        // Update throttle
+        state.throttle = throttle;
+
+        // Calculate wheel RPM from vehicle speed
+        const velocity = vehicle.chassisBody.velocity;
+        const speed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
+        const wheelRPM = (speed / (2 * Math.PI * 0.35)) * 60; // Convert to RPM
+
+        // Calculate engine RPM based on gear ratio
+        const gearRatio = config.gearbox.gears[state.currentGear - 1] || 1;
+        const finalDrive = config.gearbox.finalDriveRatio;
+        state.engineRPM = wheelRPM * gearRatio * finalDrive;
+
+        // Clamp RPM to limits
+        const rpmLimits = config.rpmLimits || { idle: 800, redline: 7000 };
+        state.engineRPM = Math.max(rpmLimits.idle, Math.min(rpmLimits.redline, state.engineRPM));
+
+        // Calculate available torque
+        const engineTorque = this.calculateEngineTorque(vehicle, throttle, state.engineRPM);
+
+        // Apply torque through transmission
+        const wheelTorque = engineTorque * gearRatio * finalDrive * (state.clutchEngaged ? 1 : 0.1);
+
+        return wheelTorque;
+    }
+
+    shiftGear(vehicle, direction) {
+        if (!this.vehicleStates.has(vehicle)) return false;
+
+        const state = this.vehicleStates.get(vehicle);
+        const config = this.getVehicleConfig(vehicle);
+        const maxGears = config.gearbox.gears.length;
+
+        const newGear = state.currentGear + direction;
+        if (newGear >= 1 && newGear <= maxGears) {
+            // Brief clutch disengagement for realistic shifting
+            state.clutchEngaged = false;
+            setTimeout(() => {
+                state.currentGear = newGear;
+                state.clutchEngaged = true;
+            }, 200); // 200ms shift time
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // Get vehicle config (this would need to be passed or stored)
+    getVehicleConfig(vehicle) {
+        // For now, return default config - in practice this should be stored per vehicle
+        return {
+            gearbox: {
+                gears: [3.5, 2.2, 1.6, 1.2, 1.0, 0.8],
+                finalDriveRatio: 3.5,
+                reverseRatio: -3.0
+            },
+            engineTorqueCurve: [
+                { rpm: 1000, torque: 200 },
+                { rpm: 2000, torque: 300 },
+                { rpm: 3000, torque: 350 },
+                { rpm: 4000, torque: 380 },
+                { rpm: 5000, torque: 400 },
+                { rpm: 6000, torque: 380 },
+                { rpm: 7000, torque: 300 }
+            ],
+            rpmLimits: { idle: 800, redline: 7000 }
+        };
     }
 
     // Get vehicle status
