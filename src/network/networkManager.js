@@ -28,6 +28,44 @@ export class NetworkManager {
         };
 
         this.matchmakingStatus = 'idle'; // idle, searching, found, joining
+
+        // Advanced networking features
+        this.networkMode = 'server_authoritative'; // 'server_authoritative', 'peer_to_peer', 'hybrid'
+        this.syncModel = {
+            entityInterestManagement: 'spatial_partitioning', // spatial_partitioning, kd_tree
+            deadReckoning: true,
+            interpolationBuffer: 100, // ms
+            bandwidthTargets: {
+                low: 8,    // kbps
+                medium: 24,
+                high: 64
+            }
+        };
+
+        // Message queues for reliable/unreliable delivery
+        this.reliableMessages = [];
+        this.unreliableMessages = [];
+
+        // Anti-cheat
+        this.antiCheat = {
+            serverChecks: true,
+            impossibleSpeedCheck: true,
+            geofenceValidation: true,
+            signatureValidation: true,
+            simulationDifferentialChecks: true
+        };
+
+        // Network testing
+        this.netTesting = {
+            simulatedConditions: {
+                latency: 0,
+                jitter: 0,
+                packetLoss: 0,
+                outOfOrder: false,
+                bandwidthThrottle: 0
+            },
+            deterministicReplay: false
+        };
     }
 
     connect(serverUrl = 'http://localhost:3001') {
@@ -554,5 +592,356 @@ export class NetworkManager {
 
     setPlayerUpdateCallback(callback) {
         this.onPlayerUpdate = callback;
+    }
+
+    // Advanced Networking Features
+
+    // Set network mode (server-authoritative, peer-to-peer, hybrid)
+    setNetworkMode(mode) {
+        if (['server_authoritative', 'peer_to_peer', 'hybrid'].includes(mode)) {
+            this.networkMode = mode;
+            console.log(`Network mode set to: ${mode}`);
+        }
+    }
+
+    // Message format handling
+    sendReliableMessage(type, payload, seq = null) {
+        if (!this.socket || !this.isConnected) return;
+
+        const message = {
+            type,
+            payload,
+            seq: seq || Date.now(),
+            timestamp: Date.now(),
+            signature: this.generateMessageSignature(payload)
+        };
+
+        if (this.networkMode === 'peer_to_peer') {
+            // Send directly to peers
+            this.sendPeerToPeerMessage(message);
+        } else {
+            // Send via server
+            this.socket.emit('reliableMessage', message);
+        }
+
+        this.reliableMessages.push(message);
+    }
+
+    sendUnreliableMessage(type, payload) {
+        if (!this.socket || !this.isConnected) return;
+
+        const message = {
+            type,
+            payload,
+            timestamp: Date.now()
+        };
+
+        // Unreliable messages don't guarantee delivery
+        if (this.networkMode === 'peer_to_peer') {
+            this.sendPeerToPeerMessage(message, false);
+        } else {
+            this.socket.emit('unreliableMessage', message);
+        }
+
+        this.unreliableMessages.push(message);
+    }
+
+    generateMessageSignature(payload) {
+        // Simple signature for anti-cheat (in production, use proper crypto)
+        const str = JSON.stringify(payload) + this.localPlayerId;
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return hash.toString();
+    }
+
+    // Sync model with entity interest management
+    updateEntityInterestManagement() {
+        if (this.syncModel.entityInterestManagement === 'spatial_partitioning') {
+            this.updateSpatialPartitioning();
+        } else if (this.syncModel.entityInterestManagement === 'kd_tree') {
+            this.updateKDTreePartitioning();
+        }
+    }
+
+    updateSpatialPartitioning() {
+        // Divide world into cells and only sync entities in nearby cells
+        const cellSize = 50; // meters
+        const localPlayer = this.getLocalPlayer();
+
+        if (!localPlayer || !localPlayer.position) return;
+
+        const playerCell = {
+            x: Math.floor(localPlayer.position.x / cellSize),
+            z: Math.floor(localPlayer.position.z / cellSize)
+        };
+
+        // Determine interest cells (3x3 grid around player)
+        const interestCells = [];
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dz = -1; dz <= 1; dz++) {
+                interestCells.push({
+                    x: playerCell.x + dx,
+                    z: playerCell.z + dz
+                });
+            }
+        }
+
+        // Only sync entities in interest cells
+        this.players.forEach((player, playerId) => {
+            if (playerId === this.localPlayerId) return;
+
+            const playerCell = {
+                x: Math.floor(player.position.x / cellSize),
+                z: Math.floor(player.position.z / cellSize)
+            };
+
+            const inInterestArea = interestCells.some(cell =>
+                cell.x === playerCell.x && cell.z === playerCell.z
+            );
+
+            player.inInterestArea = inInterestArea;
+        });
+    }
+
+    updateKDTreePartitioning() {
+        // More advanced spatial partitioning using KD-tree
+        // Implementation would build and query KD-tree for efficient nearest neighbor searches
+        console.log('KD-tree partitioning not yet implemented');
+    }
+
+    // Dead reckoning for smooth movement prediction
+    applyDeadReckoning(playerId, serverState) {
+        const player = this.players.get(playerId);
+        if (!player) return;
+
+        const now = Date.now();
+        const timeSinceUpdate = now - (serverState.timestamp || now);
+
+        if (timeSinceUpdate < this.syncModel.interpolationBuffer) {
+            // Interpolate between last known state and predicted state
+            const velocity = serverState.velocity;
+            if (velocity) {
+                const predictedPosition = {
+                    x: serverState.position.x + velocity.x * (timeSinceUpdate / 1000),
+                    y: serverState.position.y + velocity.y * (timeSinceUpdate / 1000),
+                    z: serverState.position.z + velocity.z * (timeSinceUpdate / 1000)
+                };
+
+                player.predictedPosition = predictedPosition;
+                player.lastServerUpdate = serverState;
+            }
+        }
+    }
+
+    // Bandwidth management
+    getBandwidthTarget() {
+        // Determine bandwidth target based on connection quality and game state
+        const playerCount = this.getPlayerCount();
+
+        if (playerCount <= 4) return this.syncModel.bandwidthTargets.high;
+        if (playerCount <= 8) return this.syncModel.bandwidthTargets.medium;
+        return this.syncModel.bandwidthTargets.low;
+    }
+
+    optimizeBandwidthUsage() {
+        const targetBandwidth = this.getBandwidthTarget();
+        const currentBandwidth = this.estimateCurrentBandwidth();
+
+        if (currentBandwidth > targetBandwidth) {
+            // Reduce update frequency or message detail
+            this.updateInterval = Math.max(50, this.updateInterval + 10); // Increase interval
+        } else if (currentBandwidth < targetBandwidth * 0.8) {
+            // Can afford more frequent updates
+            this.updateInterval = Math.max(20, this.updateInterval - 5); // Decrease interval
+        }
+    }
+
+    estimateCurrentBandwidth() {
+        // Estimate based on message frequency and size
+        const recentMessages = this.reliableMessages.concat(this.unreliableMessages)
+            .filter(msg => Date.now() - msg.timestamp < 1000); // Last second
+
+        const totalSize = recentMessages.reduce((size, msg) =>
+            size + JSON.stringify(msg).length, 0);
+
+        return (totalSize * 8) / 1000; // kbps
+    }
+
+    // Anti-cheat measures
+    performAntiCheatChecks(playerData) {
+        if (!this.antiCheat.serverChecks) return true;
+
+        const checks = [];
+
+        // Impossible speed check
+        if (this.antiCheat.impossibleSpeedCheck) {
+            checks.push(this.checkImpossibleSpeed(playerData));
+        }
+
+        // Geofence validation
+        if (this.antiCheat.geofenceValidation) {
+            checks.push(this.checkGeofenceViolation(playerData));
+        }
+
+        // Signature validation
+        if (this.antiCheat.signatureValidation) {
+            checks.push(this.validateMessageSignature(playerData));
+        }
+
+        // Simulation differential checks
+        if (this.antiCheat.simulationDifferentialChecks) {
+            checks.push(this.checkSimulationDifferential(playerData));
+        }
+
+        return checks.every(check => check);
+    }
+
+    checkImpossibleSpeed(playerData) {
+        const maxSpeed = 100; // m/s (very fast for a car)
+        const velocity = playerData.velocity;
+
+        if (!velocity) return true;
+
+        const speed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
+        return speed <= maxSpeed;
+    }
+
+    checkGeofenceViolation(playerData) {
+        // Check if player is within track boundaries
+        // This would need track data - simplified check
+        const position = playerData.position;
+        const trackBounds = { min: -200, max: 200 }; // Simplified
+
+        return position.x >= trackBounds.min && position.x <= trackBounds.max &&
+               position.z >= trackBounds.min && position.z <= trackBounds.max;
+    }
+
+    validateMessageSignature(playerData) {
+        // Validate message signature
+        const expectedSignature = this.generateMessageSignature(playerData.payload || playerData);
+        return playerData.signature === expectedSignature;
+    }
+
+    checkSimulationDifferential(playerData) {
+        // Compare client simulation with server simulation
+        // This would require running server-side simulation
+        return true; // Placeholder
+    }
+
+    // Network testing and simulation
+    setSimulatedConditions(conditions) {
+        this.netTesting.simulatedConditions = { ...this.netTesting.simulatedConditions, ...conditions };
+        console.log('Simulated network conditions set:', conditions);
+    }
+
+    applyNetworkSimulation(message) {
+        const conditions = this.netTesting.simulatedConditions;
+
+        // Simulate latency
+        if (conditions.latency > 0) {
+            setTimeout(() => {
+                this.processSimulatedMessage(message);
+            }, conditions.latency);
+            return;
+        }
+
+        // Simulate packet loss
+        if (conditions.packetLoss > 0 && Math.random() < conditions.packetLoss) {
+            console.log('Simulated packet loss');
+            return;
+        }
+
+        // Simulate out-of-order delivery
+        if (conditions.outOfOrder && Math.random() < 0.1) {
+            setTimeout(() => {
+                this.processSimulatedMessage(message);
+            }, Math.random() * 100);
+            return;
+        }
+
+        this.processSimulatedMessage(message);
+    }
+
+    processSimulatedMessage(message) {
+        // Process message after simulation
+        if (message.type === 'positionUpdate') {
+            this.handlePositionUpdate(message);
+        }
+        // Handle other message types...
+    }
+
+    // Deterministic replay for testing
+    startDeterministicReplay(recordedInputs) {
+        this.netTesting.deterministicReplay = true;
+        this.replayInputs = recordedInputs;
+        this.replayIndex = 0;
+        console.log('Started deterministic replay');
+    }
+
+    stopDeterministicReplay() {
+        this.netTesting.deterministicReplay = false;
+        this.replayInputs = null;
+        this.replayIndex = 0;
+        console.log('Stopped deterministic replay');
+    }
+
+    getDeterministicInput() {
+        if (!this.netTesting.deterministicReplay || !this.replayInputs) return null;
+
+        const input = this.replayInputs[this.replayIndex];
+        this.replayIndex = (this.replayIndex + 1) % this.replayInputs.length;
+        return input;
+    }
+
+    // Peer-to-peer networking (simplified)
+    sendPeerToPeerMessage(message, reliable = true) {
+        // In a real implementation, this would use WebRTC data channels
+        // For now, route through server
+        if (reliable) {
+            this.socket.emit('peerMessage', message);
+        } else {
+            this.socket.emit('unreliablePeerMessage', message);
+        }
+    }
+
+    // Enhanced position update with advanced features
+    sendEnhancedPositionUpdate(position, rotation, velocity, additionalData = {}) {
+        if (!this.isConnected || this.gameState !== 'racing') return;
+
+        const now = Date.now();
+        if (now - this.lastPositionUpdate < this.updateInterval) return;
+
+        this.lastPositionUpdate = now;
+
+        // Perform anti-cheat checks before sending
+        const playerData = {
+            position,
+            rotation,
+            velocity,
+            ...additionalData,
+            timestamp: now
+        };
+
+        if (!this.performAntiCheatChecks(playerData)) {
+            console.warn('Anti-cheat check failed, position update blocked');
+            return;
+        }
+
+        // Update entity interest management
+        this.updateEntityInterestManagement();
+
+        // Send appropriate message type based on reliability needs
+        if (this.syncModel.deadReckoning) {
+            this.sendUnreliableMessage('positionUpdate', playerData);
+        } else {
+            this.sendReliableMessage('positionUpdate', playerData);
+        }
+
+        // Optimize bandwidth
+        this.optimizeBandwidthUsage();
     }
 }
