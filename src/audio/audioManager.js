@@ -115,8 +115,9 @@ export class AudioManager {
         }
     }
 
-    updateSpatialAudio(vehiclePosition, listenerPosition, _vehicleRotation) {
+    updateSpatialAudio(vehiclePosition, listenerPosition, vehicleRotation) {
         if (!vehiclePosition || !listenerPosition) return;
+        void(vehicleRotation); // Parameter kept for future use
 
         // Update engine sound with spatial information
         this.updateEngineSound(
@@ -129,12 +130,12 @@ export class AudioManager {
         this.updateEnvironmentalAudio(vehiclePosition);
     }
 
-    updateEnvironmentalAudio(_vehiclePosition) {
+    updateEnvironmentalAudio(vehiclePosition) {
+        void(vehiclePosition); // Parameter kept for future use
         // Add wind noise based on speed
         if (this.lastKnownSpeed > 5) {
             const windVolume = Math.min(0.3, this.lastKnownSpeed / 50);
-            // Could play wind sound here if available
-            // Volume calculated but not yet used for audio playback
+            void(windVolume); // Volume calculated but not yet used for audio playback
         }
 
         // Add crowd noise near grandstands (would need track data)

@@ -233,6 +233,7 @@ export class SocialSharingManager {
     }
 
     async shareToTwitter(message, imageType) {
+        void(imageType); // Parameter kept for future use
         const url = 'https://velocityrush3d.com';
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(url)}`;
 
@@ -244,6 +245,7 @@ export class SocialSharingManager {
     }
 
     async shareToFacebook(message, imageType) {
+        void(imageType); // Parameter kept for future use
         const url = 'https://velocityrush3d.com';
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(message)}`;
 
@@ -251,6 +253,7 @@ export class SocialSharingManager {
     }
 
     async shareToDiscord(message, imageType) {
+        void(imageType); // Parameter kept for future use
         // Discord sharing typically involves webhooks or direct messaging
         // For now, copy to clipboard with Discord formatting
         const discordMessage = `**VelocityRush3D**\n${message}`;
@@ -282,6 +285,7 @@ export class SocialSharingManager {
 
     async captureScreenshot() {
         return new Promise((resolve, reject) => {
+            void(reject); // Parameter kept for Promise API
             // In a real implementation, you'd use html2canvas or similar
             // For now, return a placeholder
             setTimeout(() => {
@@ -291,13 +295,6 @@ export class SocialSharingManager {
     }
 
     async shareScreenshot(imageData, message, platform = 'clipboard') {
-        const shareData = {
-            id: `screenshot_${Date.now()}`,
-            imageData: imageData,
-            message: message,
-            platform: platform,
-            timestamp: Date.now()
-        };
 
         try {
             switch (platform) {
@@ -330,6 +327,7 @@ export class SocialSharingManager {
     }
 
     async uploadToImgur(imageData) {
+        void(imageData); // Parameter kept for future use
         // This would require an Imgur API key and actual upload
         // For now, return a placeholder
         return 'https://i.imgur.com/placeholder.png';

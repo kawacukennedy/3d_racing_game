@@ -233,6 +233,7 @@ class Game {
         // Global keyboard shortcuts (skip in test environment)
         if (!isTestEnvironment) {
             this.keydownHandler = (e) => {
+                void(e); // Event parameter kept for future use
             // ... existing keydownHandler code ...
             }
             document.addEventListener('keydown', this.keydownHandler);
@@ -486,6 +487,7 @@ class Game {
     }
 
     handlePlayerUpdate(data) {
+        void(data); // Parameter kept for future use
         // Update remote player positions in scene
         // This would sync remote players' positions
     }
@@ -493,7 +495,6 @@ class Game {
     updateNetworkPlayers() {
         if (!this.networkManager.isConnected) return;
 
-        const networkPlayers = this.networkManager.getPlayers();
         // Update scene with network player positions
         // This is a simplified version - in a full implementation,
         // you'd interpolate positions and handle prediction/correction
@@ -737,6 +738,7 @@ class Game {
     }
 
     addTrackElements(trackSegments) {
+        void(trackSegments); // Parameter kept for future use
         // Add boost pads and hazards at strategic locations
         const elements = [
             { type: 'boost_pad', position: new THREE.Vector3(20, 0.05, 0), rotation: new THREE.Euler(0, 0, 0) },

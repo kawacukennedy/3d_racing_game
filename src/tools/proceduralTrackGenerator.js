@@ -95,6 +95,7 @@ export class ProceduralTrackGenerator {
     }
 
     chooseSegmentType(index) {
+        void(index); // Parameter kept for future use
         const rand = this.random();
 
         // Adjust probabilities based on difficulty
@@ -289,6 +290,8 @@ export class ProceduralTrackGenerator {
     }
 
     generateCornerFeatures(radius, angle) {
+        void(radius); // Parameter kept for future use
+        void(angle); // Parameter kept for future use
         const features = [];
 
         // Add corner workers or spectators
@@ -507,7 +510,6 @@ export class ProceduralTrackGenerator {
     generateJumpSegment(startPos, startDirection, length) {
         const jumpHeight = 3 + this.random() * 4; // 3-7 units high
         const jumpLength = length * 0.8; // Jump takes most of segment
-        const landingLength = length * 0.2; // Landing area
 
         // Create parabolic jump path
         const midPoint = {
@@ -628,6 +630,7 @@ export class ProceduralTrackGenerator {
     }
 
     generateBankedCornerFeatures(radius, turnAngle) {
+        void(turnAngle); // Parameter kept for future use
         const features = [];
 
         // Add banking indicators
@@ -650,6 +653,7 @@ export class ProceduralTrackGenerator {
     }
 
     generateTunnelFeatures(length, height, width) {
+        void(width); // Parameter kept for future use
         const features = [];
 
         // Add tunnel lighting
@@ -902,6 +906,7 @@ export class ProceduralTrackGenerator {
 
     // Feature generation methods for new segments
     generateHairpinFeatures(radius, turnAngle) {
+        void(turnAngle); // Parameter kept for future use
         const features = [];
 
         // Add hairpin warning signs

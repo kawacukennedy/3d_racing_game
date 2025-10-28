@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 export class SocialHub {
     constructor(game) {
         this.game = game;
@@ -405,7 +403,7 @@ export class SocialHub {
     updateFriendPresence() {
         // In a real implementation, this would poll the server for friend status
         // For now, simulate some friends being online
-        for (const [friendId, friend] of this.friends) {
+        for (const friend of this.friends.values()) {
             // Randomly update status
             if (Math.random() < 0.3) {
                 const statuses = ['online', 'racing', 'in_menu', 'offline'];

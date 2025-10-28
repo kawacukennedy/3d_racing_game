@@ -94,7 +94,8 @@ export class AIController {
         return this.waypoints.map(wp => wp.clone());
     }
 
-    init(_world) {
+    init(world) {
+        void(world); // Parameter kept for future use
         // Similar to VehicleController but for AI
     }
 
@@ -270,7 +271,8 @@ export class AIController {
         return distance < 8; // Within corner approach distance
     }
 
-    checkForNearbyOpponents(_vehiclePosition) {
+    checkForNearbyOpponents(vehiclePosition) {
+        void(vehiclePosition); // Parameter kept for future use
         // This would check against other vehicles in a real implementation
         // For now, return empty array
         return [];

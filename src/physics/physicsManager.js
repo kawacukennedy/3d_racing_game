@@ -290,7 +290,7 @@ export class PhysicsManager {
             if (!vehicle) return;
 
             // Update friction based on various factors
-            vehicle.wheelInfos.forEach((wheel, index) => {
+            vehicle.wheelInfos.forEach((wheel) => {
             let frictionMultiplier = 1.0;
 
             // Reduce friction if sliding too much (simulate tire wear)
@@ -472,6 +472,7 @@ export class PhysicsManager {
 
     // Enhanced Aerodynamics with Drafting
     applyAdvancedAerodynamics(vehicle, deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         if (!vehicle || !vehicle.chassisBody) return;
 
         const velocity = vehicle.chassisBody.velocity;
@@ -720,6 +721,7 @@ export class PhysicsManager {
     }
 
     updateEngine(vehicle, throttle, deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         if (!this.vehicleStates.has(vehicle)) {
             this.initializeVehicleState(vehicle);
         }
@@ -777,6 +779,7 @@ export class PhysicsManager {
 
     // Get vehicle config (this would need to be passed or stored)
     getVehicleConfig(vehicle) {
+        void(vehicle); // Parameter kept for future use
         // For now, return default config - in practice this should be stored per vehicle
         return {
             gearbox: {

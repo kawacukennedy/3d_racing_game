@@ -249,7 +249,8 @@ export class GhostSystem {
         return this.isReplaying;
     }
 
-    update(_deltaTime) {
+    update(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         // Record current frame if recording
         if (this.isRecording) {
             this.recordFrame();

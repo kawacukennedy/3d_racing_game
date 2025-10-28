@@ -373,7 +373,8 @@ export class AIDirector {
         });
     }
 
-    processEvents(_deltaTime) {
+    processEvents(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         // Update active events and remove expired ones
         this.eventQueue = this.eventQueue.filter(event => {
             const elapsed = Date.now() - event.startTime;

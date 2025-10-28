@@ -542,6 +542,7 @@ export class NetworkManager {
 
     // Visual representation updates for multiplayer
     updatePlayerVisual(playerId, data) {
+        void(data); // Parameter kept for future use
         // This would update the 3D representation of other players
         // For now, just log the update
         if (playerId !== this.localPlayerId) {
@@ -827,6 +828,7 @@ export class NetworkManager {
     }
 
     checkSimulationDifferential(playerData) {
+        void(playerData); // Parameter kept for future use
         // Compare client simulation with server simulation
         // This would require running server-side simulation
         return true; // Placeholder

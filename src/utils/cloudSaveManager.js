@@ -84,6 +84,7 @@ export class CloudSaveManager {
     }
 
     getLocalData(game) {
+        void(game); // Parameter kept for future use
         const data = {};
         // Collect data from various managers
         try {

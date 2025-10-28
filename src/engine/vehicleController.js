@@ -44,7 +44,8 @@ export class VehicleController {
         }
     }
 
-    update(_deltaTime) {
+    update(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         if (!this.physicsVehicle || !this.physicsVehicle.chassisBody) return;
 
         let forward = false, backward = false, left = false, right = false, brake = false;

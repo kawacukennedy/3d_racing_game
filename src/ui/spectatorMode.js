@@ -284,6 +284,7 @@ export class SpectatorMode {
     }
 
     updateFollowCamera(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         if (!this.currentTarget) return;
 
         const targetPosition = this.currentTarget.position.clone();
@@ -432,6 +433,7 @@ export class SpectatorMode {
     }
 
     updateReplayCamera(progress) {
+        void(progress); // Parameter kept for future use
         // Interpolate camera position based on replay data
         // This would use recorded position data
         if (this.currentTarget) {

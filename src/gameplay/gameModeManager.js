@@ -425,7 +425,8 @@ export class GameModeManager {
         }
     }
 
-    updateEliminationMode(_deltaTime) {
+    updateEliminationMode(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         const now = Date.now();
         if (now - this.lastElimination >= this.eliminationInterval) {
             this.performElimination();
@@ -433,7 +434,8 @@ export class GameModeManager {
         }
     }
 
-    updateTimeTrialMode(_deltaTime) {
+    updateTimeTrialMode(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         // Update ghost car position
         if (this.modeState.ghostData) {
             this.updateGhostCar();
@@ -446,14 +448,15 @@ export class GameModeManager {
         this.updatePowerUps(deltaTime);
     }
 
-    updateCareerMode(_deltaTime) {
+    updateCareerMode(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         // Update championship progress
         this.updateChampionshipProgress();
     }
 
-    updateQuickMode(_deltaTime) {
+    updateQuickMode(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         // Quick mode uses standard race logic
-        // Could add random events here
     }
 
     updateEnduranceMode(deltaTime) {
@@ -467,7 +470,8 @@ export class GameModeManager {
         }
     }
 
-    updateRallyMode(_deltaTime) {
+    updateRallyMode(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         // Update stage progress
         const currentStage = this.modeState.stages[this.modeState.currentStage];
         if (currentStage && this.checkStageCompletion()) {
@@ -475,13 +479,15 @@ export class GameModeManager {
         }
     }
 
-    updateRallycrossMode(_deltaTime) {
+    updateRallycrossMode(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         // Update jump detection and scoring
         this.checkJumps();
         this.checkObstacles();
     }
 
-    updateCheckpointMode(_deltaTime) {
+    updateCheckpointMode(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         // Check for checkpoint hits
         this.checkUnorderedCheckpoints();
     }
@@ -592,7 +598,8 @@ export class GameModeManager {
         }, 30000); // 30 seconds
     }
 
-    updatePowerUps(_deltaTime) {
+    updatePowerUps(deltaTime) {
+        void(deltaTime); // Parameter kept for future use
         this.modeState.powerUps = this.modeState.powerUps.filter(powerUp => {
             const age = Date.now() - powerUp.collectedAt;
             return age < powerUp.duration;
@@ -906,7 +913,8 @@ export class GameModeManager {
     }
 
     // Pit Stop System
-    initializePitLane(_trackData) {
+    initializePitLane(trackData) {
+        void(trackData); // Parameter kept for future use
         // Create pit lane area
         this.pitLane = {
             entryPoint: new THREE.Vector3(100, 0, 0), // Near track

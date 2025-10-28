@@ -138,7 +138,6 @@ export class TournamentManager {
 
     createBrackets(tournament) {
         const players = [...tournament.players];
-        const numRounds = Math.ceil(Math.log2(players.length));
 
         tournament.brackets = [];
         tournament.currentRound = 1;
