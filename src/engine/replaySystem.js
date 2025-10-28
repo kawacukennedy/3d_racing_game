@@ -403,7 +403,7 @@ export class ReplaySystem {
         return false;
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         // Record current frame if recording
         if (this.isRecording) {
             this.recordFrame();

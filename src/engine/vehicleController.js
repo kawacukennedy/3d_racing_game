@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 export class VehicleController {
     constructor() {
         this.keys = {};
@@ -46,11 +44,8 @@ export class VehicleController {
         }
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         if (!this.physicsVehicle || !this.physicsVehicle.chassisBody) return;
-
-        const vehiclePosition = this.physicsVehicle.chassisBody.position;
-        const vehicleQuaternion = this.physicsVehicle.chassisBody.quaternion;
 
         let forward = false, backward = false, left = false, right = false, brake = false;
 

@@ -249,7 +249,7 @@ export class GhostSystem {
         return this.isReplaying;
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         // Record current frame if recording
         if (this.isRecording) {
             this.recordFrame();
@@ -261,7 +261,7 @@ export class GhostSystem {
         }
     }
 
-    onLapCompleted(lapTime, sectorTimes = []) {
+    onLapCompleted(lapTime) {
         // Called when player completes a lap
         this.stopRecording();
 

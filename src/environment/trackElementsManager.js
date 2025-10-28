@@ -83,7 +83,7 @@ export class TrackElementsManager {
         return element;
     }
 
-    createPhysicsBody(type, position, rotation, properties) {
+    createPhysicsBody(type, position, rotation, _properties) {
         let shape, body;
 
         switch (type) {

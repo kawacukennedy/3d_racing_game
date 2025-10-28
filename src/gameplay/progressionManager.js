@@ -28,6 +28,37 @@ export class ProgressionManager {
                 checkpointsPassed: 0,
                 pitStopsCompleted: 0,
                 draftingTime: 0
+            },
+            // New progression systems
+            seasonal: {
+                currentSeason: 1,
+                seasonProgress: 0,
+                seasonPassTier: 'free',
+                seasonRewards: []
+            },
+            missions: {
+                daily: {},
+                weekly: {},
+                lastRefresh: Date.now()
+            },
+            ranked: {
+                currentRank: 'Bronze III',
+                rankPoints: 0,
+                seasonWins: 0,
+                seasonLosses: 0,
+                promotionSeries: null
+            },
+            skillTrees: {},
+            garage: {
+                ownedVehicles: ['sports_car'],
+                activeVehicle: 'sports_car',
+                loadouts: {},
+                customizations: {}
+            },
+            tutorial: {
+                completedSteps: [],
+                currentStep: null,
+                enabled: true
             }
         };
 
@@ -51,7 +82,32 @@ export class ProgressionManager {
         // Achievement definitions
         this.achievements = this.defineAchievements();
 
+        // Seasonal content
+        this.seasonalContent = this.initializeSeasonalContent();
+
+        // Daily/Weekly missions
+        this.missions = this.initializeMissions();
+
+        // Ranked ladder
+        this.rankedLadder = this.initializeRankedLadder();
+
+        // Vehicle skill trees
+        this.vehicleSkillTrees = this.initializeSkillTrees();
+
+        // Garage management
+        this.garage = this.initializeGarage();
+
+        // Tutorial system
+        this.tutorial = this.initializeTutorial();
+
+        // Dynamic announcer
+        this.announcer = this.initializeAnnouncer();
+
         this.loadProgress();
+
+        // Start systems
+        this.refreshMissions();
+        this.updateSeasonalProgress();
     }
 
     generateLevelRequirements() {
@@ -163,6 +219,9 @@ export class ProgressionManager {
         this.playerData.experienceToNext = this.levelRequirements[this.playerData.level] || this.playerData.experienceToNext * 1.15;
 
         console.log(`🎉 Level up! Now level ${this.playerData.level}`);
+
+        // Announce level up
+        this.announce('level_up', { level: this.playerData.level });
 
         // Grant level rewards
         this.grantLevelRewards();
@@ -314,6 +373,9 @@ export class ProgressionManager {
 
         console.log(`🏆 Achievement unlocked: ${achievement.name} - ${achievement.description}`);
 
+        // Announce achievement
+        this.announce('achievement', { name: achievement.name });
+
         // Notify UI
         if (this.game && this.game.uiManager) {
             this.game.uiManager.showAchievement(achievement);
@@ -341,6 +403,9 @@ export class ProgressionManager {
         if (!this.playerData.statistics.bestLapTime || bestLapTime < this.playerData.statistics.bestLapTime) {
             this.playerData.statistics.bestLapTime = bestLapTime;
         }
+
+        // Announce race end
+        this.announce('race_end', { position: finalPosition });
 
         this.checkAchievements();
     }
@@ -385,6 +450,469 @@ export class ProgressionManager {
         }
     }
 
+    // Seasonal Content
+    initializeSeasonalContent() {
+        return {
+            seasons: {
+                1: {
+                    name: 'Velocity Rush Season 1',
+                    startDate: new Date('2024-01-01'),
+                    endDate: new Date('2024-03-31'),
+                    passTiers: {
+                        free: { rewards: ['vehicle_unlock', 'cosmetic_pack'] },
+                        premium: { cost: 1000, rewards: ['exclusive_vehicle', 'premium_cosmetics', 'bonus_xp'] }
+                    },
+                    events: ['winter_challenge', 'speed_trials'],
+                    rewards: [
+                        { threshold: 100, reward: { credits: 500 } },
+                        { threshold: 250, reward: { credits: 1000, gems: 5 } },
+                        { threshold: 500, reward: { credits: 2000, gems: 10, vehicle: 'season_1_car' } }
+                    ]
+                }
+            },
+            currentSeason: 1
+        };
+    }
+
+    updateSeasonalProgress(points = 1) {
+        this.playerData.seasonal.seasonProgress += points;
+        const season = this.seasonalContent.seasons[this.playerData.seasonal.currentSeason];
+
+        // Check for rewards
+        season.rewards.forEach(reward => {
+            if (this.playerData.seasonal.seasonProgress >= reward.threshold &&
+                !this.playerData.seasonal.seasonRewards.includes(reward.threshold)) {
+                this.playerData.seasonal.seasonRewards.push(reward.threshold);
+                this.grantSeasonalReward(reward.reward);
+            }
+        });
+
+        this.saveProgress();
+    }
+
+    grantSeasonalReward(reward) {
+        if (reward.credits) this.addCurrency('credits', reward.credits);
+        if (reward.gems) this.addCurrency('gems', reward.gems);
+        if (reward.vehicle) this.unlockItem('vehicles', reward.vehicle);
+        console.log('Seasonal reward granted:', reward);
+        this.announce('season_reward');
+    }
+
+    // Daily/Weekly Missions
+    initializeMissions() {
+        return {
+            daily: {
+                templates: [
+                    { id: 'daily_race', name: 'Complete 3 Races', requirement: { type: 'races_completed', value: 3 }, reward: { credits: 200, experience: 50 } },
+                    { id: 'daily_win', name: 'Win 2 Races', requirement: { type: 'races_won', value: 2 }, reward: { credits: 300, experience: 75 } },
+                    { id: 'daily_drift', name: 'Score 5000 Drift Points', requirement: { type: 'drift_score', value: 5000 }, reward: { credits: 250, experience: 60 } }
+                ]
+            },
+            weekly: {
+                templates: [
+                    { id: 'weekly_champion', name: 'Win 10 Races', requirement: { type: 'races_won', value: 10 }, reward: { credits: 1000, experience: 300, gems: 5 } },
+                    { id: 'weekly_distance', name: 'Travel 500km', requirement: { type: 'distance', value: 500000 }, reward: { credits: 800, experience: 250 } }
+                ]
+            }
+        };
+    }
+
+    refreshMissions() {
+        const now = Date.now();
+        const lastRefresh = this.playerData.missions.lastRefresh;
+        const dayMs = 24 * 60 * 60 * 1000;
+        const weekMs = 7 * dayMs;
+
+        // Refresh daily missions
+        if (now - lastRefresh >= dayMs) {
+            this.playerData.missions.daily = this.generateMissions('daily');
+        }
+
+        // Refresh weekly missions
+        if (now - lastRefresh >= weekMs) {
+            this.playerData.missions.weekly = this.generateMissions('weekly');
+        }
+
+        this.playerData.missions.lastRefresh = now;
+        this.saveProgress();
+    }
+
+    generateMissions(type) {
+        const templates = this.missions[type].templates;
+        const count = type === 'daily' ? 3 : 2;
+        const selected = [];
+
+        for (let i = 0; i < count; i++) {
+            const template = templates[Math.floor(Math.random() * templates.length)];
+            selected.push({
+                id: `${type}_${i}_${Date.now()}`,
+                ...template,
+                progress: 0,
+                completed: false
+            });
+        }
+
+        return selected;
+    }
+
+    updateMissionProgress(missionType, missionId, progress) {
+        const mission = this.playerData.missions[missionType][missionId];
+        if (mission && !mission.completed) {
+            mission.progress += progress;
+            if (mission.progress >= mission.requirement.value) {
+                mission.completed = true;
+                this.completeMission(mission);
+            }
+            this.saveProgress();
+        }
+    }
+
+    completeMission(mission) {
+        if (mission.reward.credits) this.addCurrency('credits', mission.reward.credits);
+        if (mission.reward.gems) this.addCurrency('gems', mission.reward.gems);
+        if (mission.reward.experience) this.addExperience(mission.reward.experience, 'mission');
+        console.log(`Mission completed: ${mission.name}`);
+    }
+
+    // Ranked Ladder
+    initializeRankedLadder() {
+        return {
+            ranks: [
+                'Bronze III', 'Bronze II', 'Bronze I',
+                'Silver III', 'Silver II', 'Silver I',
+                'Gold III', 'Gold II', 'Gold I',
+                'Platinum III', 'Platinum II', 'Platinum I',
+                'Diamond III', 'Diamond II', 'Diamond I',
+                'Master', 'Grandmaster'
+            ],
+            rankRequirements: {
+                'Bronze III': 0,
+                'Bronze II': 100,
+                'Bronze I': 200,
+                'Silver III': 350,
+                'Silver II': 500,
+                'Silver I': 700,
+                'Gold III': 950,
+                'Gold II': 1200,
+                'Gold I': 1500,
+                'Platinum III': 1850,
+                'Platinum II': 2200,
+                'Platinum I': 2600,
+                'Diamond III': 3000,
+                'Diamond II': 3500,
+                'Diamond I': 4000,
+                'Master': 5000,
+                'Grandmaster': 6000
+            },
+            seasonReset: new Date('2024-04-01')
+        };
+    }
+
+    updateRankedStats(win, opponentRank) {
+        const basePoints = win ? 25 : -15;
+        const rankMultiplier = this.getRankMultiplier(opponentRank);
+        const pointsChange = Math.floor(basePoints * rankMultiplier);
+
+        this.playerData.ranked.rankPoints = Math.max(0, this.playerData.ranked.rankPoints + pointsChange);
+
+        if (win) {
+            this.playerData.ranked.seasonWins++;
+            if (this.playerData.ranked.promotionSeries !== null) {
+                this.playerData.ranked.promotionSeries++;
+                if (this.playerData.ranked.promotionSeries >= 5) {
+                    this.promoteRank();
+                    this.playerData.ranked.promotionSeries = null;
+                }
+            }
+        } else {
+            this.playerData.ranked.seasonLosses++;
+            this.playerData.ranked.promotionSeries = null;
+        }
+
+        this.checkRankProgression();
+        this.saveProgress();
+    }
+
+    getRankMultiplier(opponentRank) {
+        const currentIndex = this.rankedLadder.ranks.indexOf(this.playerData.ranked.currentRank);
+        const opponentIndex = this.rankedLadder.ranks.indexOf(opponentRank);
+        const diff = opponentIndex - currentIndex;
+        return Math.max(0.5, Math.min(2.0, 1 + diff * 0.1));
+    }
+
+    checkRankProgression() {
+        const nextRankIndex = this.rankedLadder.ranks.indexOf(this.playerData.ranked.currentRank) + 1;
+
+        if (nextRankIndex < this.rankedLadder.ranks.length) {
+            const nextRank = this.rankedLadder.ranks[nextRankIndex];
+            const nextReq = this.rankedLadder.rankRequirements[nextRank];
+
+            if (this.playerData.ranked.rankPoints >= nextReq) {
+                this.playerData.ranked.currentRank = nextRank;
+                this.playerData.ranked.promotionSeries = 0;
+                console.log(`Rank promoted to ${nextRank}!`);
+            }
+        }
+    }
+
+    promoteRank() {
+        const currentIndex = this.rankedLadder.ranks.indexOf(this.playerData.ranked.currentRank);
+        if (currentIndex < this.rankedLadder.ranks.length - 1) {
+            this.playerData.ranked.currentRank = this.rankedLadder.ranks[currentIndex + 1];
+            console.log(`Promoted to ${this.playerData.ranked.currentRank}!`);
+            this.announce('rank_up', { rank: this.playerData.ranked.currentRank });
+        }
+    }
+
+    // Vehicle Skill Trees
+    initializeSkillTrees() {
+        return {
+            sports_car: {
+                name: 'Sports Car Mastery',
+                skills: {
+                    acceleration_boost: {
+                        name: 'Acceleration Boost',
+                        description: 'Increases acceleration by 10%',
+                        maxLevel: 5,
+                        cost: [100, 200, 400, 800, 1600],
+                        effect: { type: 'acceleration', value: 0.1 }
+                    },
+                    handling_improvement: {
+                        name: 'Handling Improvement',
+                        description: 'Improves cornering ability',
+                        maxLevel: 3,
+                        cost: [150, 300, 600],
+                        effect: { type: 'handling', value: 0.05 }
+                    },
+                    top_speed_increase: {
+                        name: 'Top Speed Increase',
+                        description: 'Raises maximum speed',
+                        maxLevel: 4,
+                        cost: [200, 400, 800, 1600],
+                        effect: { type: 'top_speed', value: 5 }
+                    }
+                }
+            }
+        };
+    }
+
+    upgradeSkill(vehicleId, skillId) {
+        const skillTree = this.vehicleSkillTrees[vehicleId];
+        if (!skillTree) return false;
+
+        const skill = skillTree.skills[skillId];
+        if (!skill) return false;
+
+        const currentLevel = this.playerData.skillTrees[vehicleId]?.[skillId] || 0;
+        if (currentLevel >= skill.maxLevel) return false;
+
+        const cost = skill.cost[currentLevel];
+        if (!this.spendCurrency('credits', cost)) return false;
+
+        if (!this.playerData.skillTrees[vehicleId]) {
+            this.playerData.skillTrees[vehicleId] = {};
+        }
+        this.playerData.skillTrees[vehicleId][skillId] = currentLevel + 1;
+
+        console.log(`Upgraded ${skill.name} to level ${currentLevel + 1}`);
+        this.saveProgress();
+        return true;
+    }
+
+    getSkillEffect(vehicleId, skillId) {
+        const level = this.playerData.skillTrees[vehicleId]?.[skillId] || 0;
+        const skill = this.vehicleSkillTrees[vehicleId]?.skills[skillId];
+        if (!skill) return 0;
+
+        return skill.effect.value * level;
+    }
+
+    // Garage Management
+    initializeGarage() {
+        return {
+            maxVehicles: 10,
+            customizationOptions: {
+                paint: ['red', 'blue', 'black', 'white', 'yellow'],
+                wheels: ['standard', 'sport', 'race', 'premium'],
+                decals: ['flames', 'stripes', 'numbers', 'logos']
+            }
+        };
+    }
+
+    purchaseVehicle(vehicleId, cost) {
+        if (this.playerData.garage.ownedVehicles.length >= this.garage.maxVehicles) {
+            console.log('Garage full!');
+            return false;
+        }
+
+        if (!this.spendCurrency('credits', cost)) return false;
+
+        this.playerData.garage.ownedVehicles.push(vehicleId);
+        this.unlockItem('vehicles', vehicleId);
+        console.log(`Purchased vehicle: ${vehicleId}`);
+        return true;
+    }
+
+    setActiveVehicle(vehicleId) {
+        if (this.playerData.garage.ownedVehicles.includes(vehicleId)) {
+            this.playerData.garage.activeVehicle = vehicleId;
+            this.saveProgress();
+            return true;
+        }
+        return false;
+    }
+
+    customizeVehicle(vehicleId, category, itemId, cost) {
+        if (!this.playerData.garage.ownedVehicles.includes(vehicleId)) return false;
+        if (!this.spendCurrency('credits', cost)) return false;
+
+        if (!this.playerData.garage.customizations[vehicleId]) {
+            this.playerData.garage.customizations[vehicleId] = {};
+        }
+        this.playerData.garage.customizations[vehicleId][category] = itemId;
+        this.saveProgress();
+        return true;
+    }
+
+    saveLoadout(vehicleId, loadoutName) {
+        const loadout = {
+            vehicle: vehicleId,
+            customizations: this.playerData.garage.customizations[vehicleId] || {},
+            upgrades: this.playerData.unlocks.upgrades.filter(u => u.startsWith(`${vehicleId}_`)) || []
+        };
+        this.playerData.garage.loadouts[loadoutName] = loadout;
+        this.saveProgress();
+    }
+
+    loadLoadout(loadoutName) {
+        const loadout = this.playerData.garage.loadouts[loadoutName];
+        if (loadout) {
+            this.setActiveVehicle(loadout.vehicle);
+            this.playerData.garage.customizations[loadout.vehicle] = loadout.customizations;
+            // Apply upgrades would need integration with vehicle config
+            console.log(`Loaded loadout: ${loadoutName}`);
+            this.saveProgress();
+            return true;
+        }
+        return false;
+    }
+
+    // Tutorial System
+    initializeTutorial() {
+        return {
+            steps: {
+                welcome: {
+                    id: 'welcome',
+                    title: 'Welcome to Velocity Rush!',
+                    description: 'Learn the basics of racing',
+                    trigger: 'game_start',
+                    completed: false
+                },
+                first_race: {
+                    id: 'first_race',
+                    title: 'Your First Race',
+                    description: 'Complete your first race to earn rewards',
+                    trigger: 'race_start',
+                    completed: false
+                },
+                controls: {
+                    id: 'controls',
+                    title: 'Master the Controls',
+                    description: 'Learn to accelerate, brake, and steer',
+                    trigger: 'race_start',
+                    completed: false
+                },
+                upgrades: {
+                    id: 'upgrades',
+                    title: 'Upgrade Your Car',
+                    description: 'Spend credits to improve your vehicle',
+                    trigger: 'garage_visit',
+                    completed: false
+                },
+                ranked: {
+                    id: 'ranked',
+                    title: 'Climb the Ranks',
+                    description: 'Compete in ranked matches to earn rewards',
+                    trigger: 'ranked_unlock',
+                    completed: false
+                }
+            },
+            currentStep: null
+        };
+    }
+
+    triggerTutorialStep(stepId) {
+        const step = this.tutorial.steps[stepId];
+        if (step && !step.completed && !this.playerData.tutorial.completedSteps.includes(stepId)) {
+            this.playerData.tutorial.currentStep = stepId;
+            if (this.game && this.game.uiManager) {
+                this.game.uiManager.showTutorial(step);
+            }
+        }
+    }
+
+    completeTutorialStep(stepId) {
+        if (this.playerData.tutorial.currentStep === stepId) {
+            this.playerData.tutorial.completedSteps.push(stepId);
+            this.tutorial.steps[stepId].completed = true;
+            this.playerData.tutorial.currentStep = null;
+            this.saveProgress();
+
+            // Trigger next step if applicable
+            const nextSteps = {
+                'welcome': 'first_race',
+                'first_race': 'controls',
+                'controls': 'upgrades'
+            };
+            if (nextSteps[stepId]) {
+                setTimeout(() => this.triggerTutorialStep(nextSteps[stepId]), 2000);
+            }
+        }
+    }
+
+    // Dynamic Announcer
+    initializeAnnouncer() {
+        return {
+            events: {
+                race_start: ['Gentlemen, start your engines!', 'The race begins now!', 'Go!'],
+                race_end: ['Race complete!', 'What a finish!', 'Check your results!'],
+                level_up: ['Level up! Congratulations!', 'You\'ve reached a new level!', 'Keep it up!'],
+                achievement: ['Achievement unlocked!', 'Well done!', 'You\'ve earned a new achievement!'],
+                rank_up: ['Rank increased!', 'You\'ve climbed the ladder!', 'New rank achieved!'],
+                season_reward: ['Seasonal reward earned!', 'Keep progressing!', 'Season milestone reached!']
+            },
+            localization: {
+                en: { /* English strings */ },
+                es: { /* Spanish strings */ },
+                fr: { /* French strings */ }
+            },
+            currentLanguage: 'en'
+        };
+    }
+
+    announce(eventType, data = {}) {
+        const messages = this.announcer.events[eventType];
+        if (messages) {
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            const localizedMessage = this.getLocalizedMessage(eventType, message);
+
+            if (this.game && this.game.audioManager) {
+                this.game.audioManager.playAnnouncerSound(eventType);
+            }
+
+            if (this.game && this.game.uiManager) {
+                this.game.uiManager.showAnnouncement(localizedMessage, data);
+            }
+
+            console.log(`Announcer: ${localizedMessage}`);
+        }
+    }
+
+    getLocalizedMessage(eventType, defaultMessage) {
+        const lang = this.announcer.currentLanguage;
+        return this.announcer.localization[lang]?.[eventType]?.[defaultMessage] || defaultMessage;
+    }
+
     // Getters
     getPlayerData() {
         return { ...this.playerData };
@@ -408,5 +936,29 @@ export class ProgressionManager {
             ...achievement,
             unlocked: this.playerData.achievements.includes(achievement.id)
         }));
+    }
+
+    getSeasonalData() {
+        return { ...this.playerData.seasonal };
+    }
+
+    getMissions() {
+        return { ...this.playerData.missions };
+    }
+
+    getRankedData() {
+        return { ...this.playerData.ranked };
+    }
+
+    getSkillTrees() {
+        return { ...this.playerData.skillTrees };
+    }
+
+    getGarageData() {
+        return { ...this.playerData.garage };
+    }
+
+    getTutorialData() {
+        return { ...this.playerData.tutorial };
     }
 }

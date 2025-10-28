@@ -94,7 +94,7 @@ export class AIController {
         return this.waypoints.map(wp => wp.clone());
     }
 
-    init(world) {
+    init(_world) {
         // Similar to VehicleController but for AI
     }
 
@@ -149,7 +149,6 @@ export class AIController {
 
         // Evaluate current situation
         const speed = Math.sqrt(vehicleVelocity.x ** 2 + vehicleVelocity.z ** 2);
-        const isInCorner = this.isApproachingCorner(vehiclePosition);
         const hasNearbyOpponents = this.checkForNearbyOpponents(vehiclePosition);
 
         // Behavior tree logic
@@ -271,7 +270,7 @@ export class AIController {
         return distance < 8; // Within corner approach distance
     }
 
-    checkForNearbyOpponents(vehiclePosition) {
+    checkForNearbyOpponents(_vehiclePosition) {
         // This would check against other vehicles in a real implementation
         // For now, return empty array
         return [];
@@ -353,7 +352,6 @@ export class AIController {
 
     calculateThrottle(vehiclePosition, targetWaypoint) {
         const distance = vehiclePosition.distanceTo(targetWaypoint);
-        const currentSpeed = this.getCurrentSpeed();
 
         // Base throttle calculation
         let throttle = 1.0;

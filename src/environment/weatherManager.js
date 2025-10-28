@@ -119,9 +119,6 @@ export class WeatherManager {
     }
 
     updateWeatherTransition(progress) {
-        const current = this.weatherTypes[this.currentWeather];
-        const target = this.weatherTypes[this.targetWeather];
-
         this.weatherIntensity = this.targetIntensity * progress;
 
         // Interpolate particle counts, etc.
@@ -129,8 +126,6 @@ export class WeatherManager {
     }
 
     updateParticles(deltaTime) {
-        const weatherConfig = this.weatherTypes[this.currentWeather];
-
         // Update rain particles
         if (this.rainParticles) {
             this.rainParticles.visible = ['rain', 'heavyRain'].includes(this.currentWeather);

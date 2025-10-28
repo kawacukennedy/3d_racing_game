@@ -1,45 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="VelocityRush3D" tests="22" failures="0" time="6.261">
-    <testcase name="Physics Engine Initialization" classname="physics" time="0.342">
+  <testsuite name="VelocityRush3D" tests="22" failures="0" time="6.497">
+    <testcase name="Physics Engine Initialization" classname="physics" time="0.236">
     </testcase>
-    <testcase name="Vehicle Physics Creation" classname="physics" time="0.009">
+    <testcase name="Vehicle Physics Creation" classname="physics" time="0.011">
     </testcase>
-    <testcase name="Physics Simulation" classname="physics" time="0.117">
+    <testcase name="Physics Simulation" classname="physics" time="0.262">
     </testcase>
-    <testcase name="Three.js Scene Creation" classname="rendering" time="0.227">
+    <testcase name="Three.js Scene Creation" classname="rendering" time="0.147">
     </testcase>
-    <testcase name="Vehicle Mesh Creation" classname="rendering" time="0.040">
+    <testcase name="Vehicle Mesh Creation" classname="rendering" time="0.018">
     </testcase>
-    <testcase name="Vehicle Configuration Loading" classname="gameplay" time="0.000">
+    <testcase name="Vehicle Configuration Loading" classname="gameplay" time="0.002">
     </testcase>
-    <testcase name="Customization System" classname="gameplay" time="0.016">
+    <testcase name="Customization System" classname="gameplay" time="0.008">
     </testcase>
-    <testcase name="Network Manager Initialization" classname="network" time="0.371">
+    <testcase name="Network Manager Initialization" classname="network" time="0.305">
     </testcase>
-    <testcase name="Tournament System" classname="network" time="0.004">
+    <testcase name="Tournament System" classname="network" time="0.012">
     </testcase>
-    <testcase name="Social Manager Initialization" classname="social" time="0.010">
+    <testcase name="Social Manager Initialization" classname="social" time="0.002">
     </testcase>
-    <testcase name="Leaderboard System" classname="social" time="0.009">
+    <testcase name="Leaderboard System" classname="social" time="0.004">
     </testcase>
-    <testcase name="Basic Rendering Performance" classname="performance" time="5.007">
+    <testcase name="Basic Rendering Performance" classname="performance" time="5.011">
     </testcase>
-    <testcase name="Memory Usage Check" classname="performance" time="0.000">
+    <testcase name="Memory Usage Check" classname="performance" time="0.001">
     </testcase>
-    <testcase name="Physics-Rendering Vehicle Synchronization" classname="integration" time="0.017">
+    <testcase name="Physics-Rendering Vehicle Synchronization" classname="integration" time="0.044">
     </testcase>
-    <testcase name="Physics-Rendering Wheel Synchronization" classname="integration" time="0.055">
+    <testcase name="Physics-Rendering Wheel Synchronization" classname="integration" time="0.396">
     </testcase>
-    <testcase name="Network-Gameplay Race Synchronization" classname="integration" time="0.004">
+    <testcase name="Network-Gameplay Race Synchronization" classname="integration" time="0.006">
     </testcase>
-    <testcase name="Tournament-Network Integration" classname="integration" time="0.003">
+    <testcase name="Tournament-Network Integration" classname="integration" time="0.001">
     </testcase>
-    <testcase name="UI-Gameplay HUD Updates" classname="integration" time="0.004">
+    <testcase name="UI-Gameplay HUD Updates" classname="integration" time="0.003">
     </testcase>
     <testcase name="UI-Gameplay Menu Navigation" classname="integration" time="0.001">
     </testcase>
-    <testcase name="Audio-Gameplay Engine Sounds" classname="integration" time="0.021">
+    <testcase name="Audio-Gameplay Engine Sounds" classname="integration" time="0.015">
     </testcase>
     <testcase name="Full Game Initialization" classname="integration" time="0.000">
     </testcase>

@@ -28,6 +28,32 @@ export class GameModeManager {
 
     initializeGameModes() {
         this.gameModes = {
+            career: {
+                name: 'Career Mode',
+                description: 'Progress through championships and unlock rewards',
+                rules: ['Complete championship events', 'Earn stars to progress'],
+                scoring: 'championship_points',
+                timeLimit: null,
+                specialRules: {
+                    championships: true,
+                    unlocks: true,
+                    progression: true
+                }
+            },
+
+            quick: {
+                name: 'Quick Race',
+                description: 'Fast-paced single race with random settings',
+                rules: ['Complete the race', 'Random track and conditions'],
+                scoring: 'position',
+                timeLimit: null,
+                specialRules: {
+                    randomTrack: true,
+                    randomWeather: true,
+                    quickSetup: true
+                }
+            },
+
             standard: {
                 name: 'Standard Race',
                 description: 'Complete laps to finish first',
@@ -59,6 +85,70 @@ export class GameModeManager {
                 specialRules: {
                     eliminationTimer: 30000,
                     positionBased: true
+                }
+            },
+
+            endurance: {
+                name: 'Endurance Race',
+                description: 'Long-distance race with pit stops and strategy',
+                rules: ['Complete many laps', 'Manage fuel and tires'],
+                scoring: 'position',
+                timeLimit: null,
+                specialRules: {
+                    fuelManagement: true,
+                    tireWear: true,
+                    pitStops: true,
+                    longDistance: true
+                }
+            },
+
+            rally: {
+                name: 'Rally Race',
+                description: 'Off-road racing with varied terrain',
+                rules: ['Navigate diverse terrain', 'Stage-based competition'],
+                scoring: 'stage_time',
+                timeLimit: null,
+                specialRules: {
+                    offRoad: true,
+                    stages: true,
+                    terrainDamage: true
+                }
+            },
+
+            rallycross: {
+                name: 'Rallycross',
+                description: 'Mixed terrain with jumps and obstacles',
+                rules: ['Mix of tarmac and dirt', 'Aggressive racing'],
+                scoring: 'position',
+                timeLimit: null,
+                specialRules: {
+                    mixedTerrain: true,
+                    jumps: true,
+                    obstacles: true
+                }
+            },
+
+            checkpoint: {
+                name: 'Checkpoint Race',
+                description: 'Race through checkpoints in any order',
+                rules: ['Hit all checkpoints', 'Order doesn\'t matter'],
+                scoring: 'checkpoint_time',
+                timeLimit: 600000, // 10 minutes
+                specialRules: {
+                    unorderedCheckpoints: true,
+                    timeBased: true
+                }
+            },
+
+            pursuit_escape: {
+                name: 'Pursuit/Escape',
+                description: 'Catch or evade opponents in a timed chase',
+                rules: ['Pursuers catch escapers', 'Switch roles each round'],
+                scoring: 'catch_time',
+                timeLimit: 300000, // 5 minutes
+                specialRules: {
+                    roleSwitching: true,
+                    chaseMechanics: true
                 }
             },
 
@@ -116,11 +206,32 @@ export class GameModeManager {
 
     initializeModeSpecificFeatures() {
         switch (this.currentMode) {
+            case 'career':
+                this.initializeCareerMode();
+                break;
+            case 'quick':
+                this.initializeQuickMode();
+                break;
             case 'drift':
                 this.initializeDriftMode();
                 break;
             case 'elimination':
                 this.initializeEliminationMode();
+                break;
+            case 'endurance':
+                this.initializeEnduranceMode();
+                break;
+            case 'rally':
+                this.initializeRallyMode();
+                break;
+            case 'rallycross':
+                this.initializeRallycrossMode();
+                break;
+            case 'checkpoint':
+                this.initializeCheckpointMode();
+                break;
+            case 'pursuit_escape':
+                this.initializePursuitEscapeMode();
                 break;
             case 'time_trial':
                 this.initializeTimeTrialMode();
@@ -166,6 +277,64 @@ export class GameModeManager {
         console.log('Battle mode initialized');
     }
 
+    initializeCareerMode() {
+        this.modeState.championship = this.loadCurrentChampionship();
+        this.modeState.eventProgress = 0;
+        this.modeState.starsEarned = 0;
+
+        console.log('Career mode initialized');
+    }
+
+    initializeQuickMode() {
+        // Randomize track and weather
+        this.modeState.randomTrack = this.selectRandomTrack();
+        this.modeState.randomWeather = this.selectRandomWeather();
+        this.modeState.lapCount = Math.floor(Math.random() * 5) + 1; // 1-5 laps
+
+        console.log('Quick race mode initialized with random settings');
+    }
+
+    initializeEnduranceMode() {
+        this.totalLaps = 50; // Long race
+        this.modeState.fuelLevel = 100;
+        this.modeState.tireWear = 0;
+        this.modeState.pitStopsRequired = 0;
+
+        console.log('Endurance mode initialized');
+    }
+
+    initializeRallyMode() {
+        this.modeState.stages = this.createRallyStages();
+        this.modeState.currentStage = 0;
+        this.modeState.stageTimes = [];
+
+        console.log('Rally mode initialized');
+    }
+
+    initializeRallycrossMode() {
+        this.modeState.jumps = this.createJumps();
+        this.modeState.obstacles = this.createObstacles();
+        this.modeState.terrainSections = this.createTerrainSections();
+
+        console.log('Rallycross mode initialized');
+    }
+
+    initializeCheckpointMode() {
+        this.modeState.checkpointsHit = new Set();
+        this.modeState.totalCheckpoints = 10;
+        this.modeState.startTime = Date.now();
+
+        console.log('Checkpoint mode initialized');
+    }
+
+    initializePursuitEscapeMode() {
+        this.modeState.roles = { pursuer: 'player1', escaper: 'player2' };
+        this.modeState.catchTime = 0;
+        this.modeState.roleSwitchTimer = 120000; // 2 minutes
+
+        console.log('Pursuit/Escape mode initialized');
+    }
+
     createDriftZones() {
         // Create drift scoring zones around track corners
         // This would analyze the track and place zones at corners
@@ -201,11 +370,32 @@ export class GameModeManager {
         this.modeTimer += deltaTime;
 
         switch (this.currentMode) {
+            case 'career':
+                this.updateCareerMode(deltaTime);
+                break;
+            case 'quick':
+                this.updateQuickMode(deltaTime);
+                break;
             case 'drift':
                 this.updateDriftMode(deltaTime);
                 break;
             case 'elimination':
                 this.updateEliminationMode(deltaTime);
+                break;
+            case 'endurance':
+                this.updateEnduranceMode(deltaTime);
+                break;
+            case 'rally':
+                this.updateRallyMode(deltaTime);
+                break;
+            case 'rallycross':
+                this.updateRallycrossMode(deltaTime);
+                break;
+            case 'checkpoint':
+                this.updateCheckpointMode(deltaTime);
+                break;
+            case 'pursuit_escape':
+                this.updatePursuitEscapeMode(deltaTime);
                 break;
             case 'time_trial':
                 this.updateTimeTrialMode(deltaTime);
@@ -235,7 +425,7 @@ export class GameModeManager {
         }
     }
 
-    updateEliminationMode(deltaTime) {
+    updateEliminationMode(_deltaTime) {
         const now = Date.now();
         if (now - this.lastElimination >= this.eliminationInterval) {
             this.performElimination();
@@ -243,7 +433,7 @@ export class GameModeManager {
         }
     }
 
-    updateTimeTrialMode(deltaTime) {
+    updateTimeTrialMode(_deltaTime) {
         // Update ghost car position
         if (this.modeState.ghostData) {
             this.updateGhostCar();
@@ -256,8 +446,58 @@ export class GameModeManager {
         this.updatePowerUps(deltaTime);
     }
 
+    updateCareerMode(_deltaTime) {
+        // Update championship progress
+        this.updateChampionshipProgress();
+    }
+
+    updateQuickMode(_deltaTime) {
+        // Quick mode uses standard race logic
+        // Could add random events here
+    }
+
+    updateEnduranceMode(deltaTime) {
+        // Update fuel consumption
+        this.modeState.fuelLevel -= deltaTime * 0.01; // Consume fuel over time
+        this.modeState.tireWear += deltaTime * 0.005; // Tire wear
+
+        // Check if pit stop needed
+        if (this.modeState.fuelLevel < 20 || this.modeState.tireWear > 80) {
+            this.modeState.pitStopRequired = true;
+        }
+    }
+
+    updateRallyMode(_deltaTime) {
+        // Update stage progress
+        const currentStage = this.modeState.stages[this.modeState.currentStage];
+        if (currentStage && this.checkStageCompletion()) {
+            this.completeStage();
+        }
+    }
+
+    updateRallycrossMode(_deltaTime) {
+        // Update jump detection and scoring
+        this.checkJumps();
+        this.checkObstacles();
+    }
+
+    updateCheckpointMode(_deltaTime) {
+        // Check for checkpoint hits
+        this.checkUnorderedCheckpoints();
+    }
+
+    updatePursuitEscapeMode(deltaTime) {
+        // Update chase mechanics
+        this.updateChaseMechanics(deltaTime);
+
+        // Check for role switch
+        if (this.modeTimer >= this.modeState.roleSwitchTimer) {
+            this.switchRoles();
+        }
+    }
+
     checkDriftZones(playerPos) {
-        this.modeState.driftZones.forEach((zone, index) => {
+        this.modeState.driftZones.forEach((zone) => {
             const distance = Math.sqrt(
                 Math.pow(playerPos.x - zone.position.x, 2) +
                 Math.pow(playerPos.z - zone.position.z, 2)
@@ -352,7 +592,7 @@ export class GameModeManager {
         }, 30000); // 30 seconds
     }
 
-    updatePowerUps(deltaTime) {
+    updatePowerUps(_deltaTime) {
         this.modeState.powerUps = this.modeState.powerUps.filter(powerUp => {
             const age = Date.now() - powerUp.collectedAt;
             return age < powerUp.duration;
@@ -386,10 +626,22 @@ export class GameModeManager {
 
     getCurrentScore() {
         switch (this.currentMode) {
+            case 'career':
+                return this.modeState.starsEarned || 0;
             case 'drift':
                 return this.modeState.driftScore || 0;
             case 'elimination':
                 return this.modeState.survivalTime || 0;
+            case 'endurance':
+                return this.lapCount;
+            case 'rally':
+                return this.modeState.stageTimes?.reduce((sum, time) => sum + time, 0) || 0;
+            case 'rallycross':
+                return this.modeState.jumpsCompleted || 0;
+            case 'checkpoint':
+                return this.modeState.checkpointsHit?.size || 0;
+            case 'pursuit_escape':
+                return this.modeState.catchTime || 0;
             case 'time_trial':
                 return this.modeState.bestLapTime || 0;
             case 'battle':
@@ -425,6 +677,14 @@ export class GameModeManager {
 
     getModeProgress() {
         switch (this.currentMode) {
+            case 'career':
+                return {
+                    type: 'championship',
+                    currentEvent: this.modeState.championship?.currentEvent || 0,
+                    totalEvents: this.modeState.championship?.events?.length || 1,
+                    percentage: ((this.modeState.championship?.currentEvent || 0) / (this.modeState.championship?.events?.length || 1)) * 100
+                };
+            case 'quick':
             case 'standard':
             case 'time_trial':
                 return {
@@ -446,6 +706,41 @@ export class GameModeManager {
                     remainingPlayers: this.modeState.players ? this.modeState.players.filter(p => p.status === 'active').length : 0,
                     totalPlayers: this.modeState.players ? this.modeState.players.length : 0,
                     percentage: this.modeState.players ? (this.modeState.players.filter(p => p.status === 'active').length / this.modeState.players.length) * 100 : 0
+                };
+            case 'endurance':
+                return {
+                    type: 'fuel_based',
+                    fuelLevel: this.modeState.fuelLevel || 100,
+                    tireWear: this.modeState.tireWear || 0,
+                    percentage: this.totalLaps > 0 ? (this.lapCount / this.totalLaps) * 100 : 0
+                };
+            case 'rally':
+                return {
+                    type: 'stage_based',
+                    currentStage: this.modeState.currentStage || 0,
+                    totalStages: this.modeState.stages?.length || 1,
+                    percentage: ((this.modeState.currentStage || 0) / (this.modeState.stages?.length || 1)) * 100
+                };
+            case 'rallycross':
+                return {
+                    type: 'lap_based',
+                    current: this.lapCount,
+                    total: this.totalLaps,
+                    percentage: this.totalLaps > 0 ? (this.lapCount / this.totalLaps) * 100 : 0
+                };
+            case 'checkpoint':
+                return {
+                    type: 'checkpoint_based',
+                    current: this.modeState.checkpointsHit?.size || 0,
+                    total: this.modeState.totalCheckpoints || 10,
+                    percentage: ((this.modeState.checkpointsHit?.size || 0) / (this.modeState.totalCheckpoints || 10)) * 100
+                };
+            case 'pursuit_escape':
+                return {
+                    type: 'time_based',
+                    current: this.modeTimer,
+                    total: this.modeState.roleSwitchTimer || 120000,
+                    percentage: (this.modeTimer / (this.modeState.roleSwitchTimer || 120000)) * 100
                 };
             case 'battle':
                 return {
@@ -471,6 +766,25 @@ export class GameModeManager {
 
         // Mode-specific completion conditions
         switch (this.currentMode) {
+            case 'career':
+                return this.modeState.championship?.currentEvent >= this.modeState.championship?.events?.length;
+            case 'quick':
+            case 'standard':
+                return this.lapCount >= this.totalLaps;
+            case 'drift':
+                return this.modeState.driftScore >= 10000;
+            case 'elimination':
+                return this.modeState.players?.filter(p => p.status === 'active').length <= 1;
+            case 'endurance':
+                return this.lapCount >= this.totalLaps;
+            case 'rally':
+                return this.modeState.currentStage >= this.modeState.stages?.length;
+            case 'rallycross':
+                return this.lapCount >= this.totalLaps;
+            case 'checkpoint':
+                return this.modeState.checkpointsHit?.size >= this.modeState.totalCheckpoints;
+            case 'pursuit_escape':
+                return this.modeTimer >= this.modeState.roleSwitchTimer * 3; // 3 rounds
             case 'time_trial':
                 return this.modeState.lapTimes.length >= 3; // 3 laps
             case 'battle':
@@ -592,7 +906,7 @@ export class GameModeManager {
     }
 
     // Pit Stop System
-    initializePitLane(trackData) {
+    initializePitLane(_trackData) {
         // Create pit lane area
         this.pitLane = {
             entryPoint: new THREE.Vector3(100, 0, 0), // Near track

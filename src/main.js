@@ -3,7 +3,7 @@ import * as CANNON from 'cannon-es';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js';
 import { PhysicsManager } from './physics/physicsManager.js';
@@ -42,30 +42,6 @@ import { EnhancedLeaderboardManager } from './multiplayer/enhancedLeaderboard.js
 import { SocialSharingManager } from './multiplayer/socialSharing.js';
 import { SocialHub } from './multiplayer/socialHub.js';
 
-// Motion Blur Shader
-const MotionBlurShader = {
-    uniforms: {
-        'tDiffuse': { value: null },
-        'velocityFactor': { value: 0.5 }
-    },
-    vertexShader: `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform float velocityFactor;
-        varying vec2 vUv;
-
-        void main() {
-            vec4 color = texture2D(tDiffuse, vUv);
-            gl_FragColor = color;
-        }
-    `
-};
 
 class Game {
     constructor() {
@@ -847,7 +823,14 @@ class Game {
     }
 
     updateRace() {
-        if (!this.raceActive || !this.playerVehicleBody) return;
+        if (!this.raceActive) return;
+
+        // Update mesh position from physics body
+        const physicsVehicle = this.physicsManager.getVehicle(0);
+        if (physicsVehicle && physicsVehicle.chassisBody && this.playerVehicle) {
+            this.playerVehicle.position.copy(physicsVehicle.chassisBody.position);
+            this.playerVehicle.quaternion.copy(physicsVehicle.chassisBody.quaternion);
+        }
 
         const engineForce = 1500;
         const brakeForce = 100;
@@ -855,10 +838,10 @@ class Game {
 
         // Apply engine force
         if (this.keys.forward) {
-            this.playerVehicleBody.applyLocalForce(new CANNON.Vec3(0, 0, engineForce), new CANNON.Vec3(0, 0, 0));
+            physicsVehicle.chassisBody.applyLocalForce(new CANNON.Vec3(0, 0, engineForce), new CANNON.Vec3(0, 0, 0));
         }
         if (this.keys.backward) {
-            this.playerVehicleBody.applyLocalForce(new CANNON.Vec3(0, 0, -brakeForce), new CANNON.Vec3(0, 0, 0));
+            physicsVehicle.chassisBody.applyLocalForce(new CANNON.Vec3(0, 0, -brakeForce), new CANNON.Vec3(0, 0, 0));
         }
 
         // Apply steering

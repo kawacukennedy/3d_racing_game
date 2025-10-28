@@ -418,7 +418,7 @@ export class DynamicEvents {
         return mesh;
     }
 
-    updateActiveEvents(deltaTime) {
+    updateActiveEvents(_deltaTime) {
         // Update event timers and remove expired events
         for (const [eventId, event] of this.activeEvents) {
             const elapsed = Date.now() - event.startTime;
@@ -523,7 +523,7 @@ export class DynamicEvents {
         this.powerUps.delete(powerUpId);
     }
 
-    updateActivePowerUpEffects(deltaTime) {
+    updateActivePowerUpEffects(_deltaTime) {
         // Update durations and remove expired power-ups
         const now = Date.now();
         for (const [id, powerUp] of this.activePowerUps) {
@@ -536,7 +536,7 @@ export class DynamicEvents {
         }
     }
 
-    updateTrackModifications(deltaTime) {
+    updateTrackModifications(_deltaTime) {
         // Apply zone effects to vehicles in range
         this.modificationZones.forEach(zone => {
             this.applyZoneEffect(zone);

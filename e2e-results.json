@@ -1,17 +1,92 @@
 {
-  "passed": 1,
+  "passed": 7,
   "failed": 0,
-  "total": 1,
-  "duration": 34358.176303,
+  "total": 7,
+  "duration": 57598.711359,
   "testResults": [
     {
       "name": "Game Loading and Initialization",
       "status": "passed",
-      "duration": 11939.055485999997,
+      "duration": 4387.459571000001,
       "result": {
         "canvasReady": true,
         "dimensions": "800x600",
         "initialized": true
+      }
+    },
+    {
+      "name": "Menu Navigation Flow",
+      "status": "passed",
+      "duration": 3036.5544470000023,
+      "result": {
+        "mainMenuLoaded": false,
+        "vehicleMenuAccessible": false,
+        "trackMenuAccessible": false,
+        "navigationWorking": true
+      }
+    },
+    {
+      "name": "Game Start and Basic Gameplay",
+      "status": "passed",
+      "duration": 3770.094947999998,
+      "result": {
+        "gameStarted": true,
+        "gameRunning": true,
+        "hudVisible": true
+      }
+    },
+    {
+      "name": "Input Controls Functionality",
+      "status": "passed",
+      "duration": 2021.0820620000013,
+      "result": {
+        "inputManagerInitialized": false,
+        "vehicleControllerInitialized": true,
+        "playerVehicleReady": true,
+        "controlsReady": true
+      }
+    },
+    {
+      "name": "Performance Under Load",
+      "status": "passed",
+      "duration": 4090.31264,
+      "result": {
+        "avgFPS": "47.4",
+        "totalFrames": 95,
+        "duration": "2002.90",
+        "performanceMet": true
+      }
+    },
+    {
+      "name": "Multiplayer Connection",
+      "status": "passed",
+      "duration": 3223.4255879999982,
+      "result": {
+        "connectionAttempted": true,
+        "connected": false,
+        "error": null
+      }
+    },
+    {
+      "name": "Responsive Design",
+      "status": "passed",
+      "duration": 12570.915936000005,
+      "result": {
+        "Desktop": {
+          "canvasVisible": true,
+          "viewport": "1920x1080",
+          "canvasSize": "1920x1080"
+        },
+        "Tablet": {
+          "canvasVisible": true,
+          "viewport": "768x1024",
+          "canvasSize": "768x1024"
+        },
+        "Mobile": {
+          "canvasVisible": true,
+          "viewport": "375x667",
+          "canvasSize": "375x667"
+        }
       }
     }
   ]

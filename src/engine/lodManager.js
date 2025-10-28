@@ -307,7 +307,7 @@ export class LODManager {
     /**
      * Create high detail track geometry
      */
-    createHighDetailTrackGeometry(trackConfig) {
+    createHighDetailTrackGeometry(_trackConfig) {
         // Create detailed track surface with curbs, etc.
         const geometry = new THREE.PlaneGeometry(100, 100, 50, 50); // High poly count
         geometry.rotateX(-Math.PI / 2);
@@ -317,7 +317,7 @@ export class LODManager {
     /**
      * Create medium detail track geometry
      */
-    createMediumDetailTrackGeometry(trackConfig) {
+    createMediumDetailTrackGeometry(_trackConfig) {
         // Medium detail track
         const geometry = new THREE.PlaneGeometry(100, 100, 25, 25); // Medium poly count
         geometry.rotateX(-Math.PI / 2);
@@ -327,7 +327,7 @@ export class LODManager {
     /**
      * Create low detail track geometry
      */
-    createLowDetailTrackGeometry(trackConfig) {
+    createLowDetailTrackGeometry(_trackConfig) {
         // Basic ground plane
         const geometry = new THREE.PlaneGeometry(100, 100);
         geometry.rotateX(-Math.PI / 2);
@@ -337,7 +337,7 @@ export class LODManager {
     /**
      * Create track material
      */
-    createTrackMaterial(trackConfig, quality) {
+    createTrackMaterial(trackConfig, _quality) {
         return new THREE.MeshLambertMaterial({
             color: trackConfig.color || 0x228B22,
             transparent: false
